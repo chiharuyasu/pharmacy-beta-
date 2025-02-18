@@ -5,12 +5,14 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
@@ -24,7 +26,9 @@ public class CustomerActivity extends AppCompatActivity {
     private DBHelper dbHelper;
     private TextInputEditText searchEditText;
     private TextView cartItemCount;
+    private ImageButton cartButton;
     private ArrayList<Product> cartItems;
+    private View cartButtonContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +46,8 @@ public class CustomerActivity extends AppCompatActivity {
         rvProducts = findViewById(R.id.rvProducts);
         searchEditText = findViewById(R.id.searchEditText);
         cartItemCount = findViewById(R.id.cartItemCount);
-        ImageButton cartButton = findViewById(R.id.cartButton);
+        cartButton = findViewById(R.id.cartButton);
+        cartButtonContainer = findViewById(R.id.cartButtonContainer);
 
         // Setup RecyclerView
         rvProducts.setLayoutManager(new LinearLayoutManager(this));
@@ -68,8 +73,7 @@ public class CustomerActivity extends AppCompatActivity {
 
                 @Override
                 public void onAddToCart(Product product) {
-                    cartItems.add(product);
-                    updateCartBadge();
+                    addToCart(product);
                 }
             });
         
@@ -91,10 +95,40 @@ public class CustomerActivity extends AppCompatActivity {
 
         // Setup cart button click
         cartButton.setOnClickListener(v -> {
-            Intent intent = new Intent(CustomerActivity.this, CartActivity.class);
-            intent.putExtra("cartItems", cartItems);
-            startActivity(intent);
+            if (cartItems.isEmpty()) {
+                Snackbar.make(v, "Your cart is empty", Snackbar.LENGTH_SHORT).show();
+                return;
+            }
+            try {
+                Intent intent = new Intent(CustomerActivity.this, CartActivity.class);
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("cartItems", cartItems);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            } catch (Exception e) {
+                Snackbar.make(v, "Error opening cart", Snackbar.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
         });
+    }
+
+    private void addToCart(Product product) {
+        cartItems.add(product);
+        updateCartBadge();
+        
+        // Animate cart button
+        cartButtonContainer.startAnimation(
+            AnimationUtils.loadAnimation(this, R.anim.shake_animation));
+        
+        // Show success message with undo option
+        Snackbar.make(findViewById(android.R.id.content), 
+                     product.getName() + " added to cart", 
+                     Snackbar.LENGTH_LONG)
+                .setAction("UNDO", v -> {
+                    cartItems.remove(cartItems.size() - 1);
+                    updateCartBadge();
+                })
+                .show();
     }
 
     private void filterProducts(String query) {

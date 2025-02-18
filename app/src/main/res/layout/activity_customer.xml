@@ -18,28 +18,34 @@
             app:title="Pharmacy Store"
             app:titleTextColor="@android:color/white">
 
-            <ImageButton
-                android:id="@+id/cartButton"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_gravity="end"
-                android:layout_marginEnd="16dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/addproduct"
-                android:contentDescription="Shopping Cart"/>
+            <FrameLayout
+                android:id="@+id/cartButtonContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end">
 
-            <TextView
-                android:id="@+id/cartItemCount"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_gravity="end"
-                android:layout_marginEnd="12dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/circle_badge"
-                android:gravity="center"
-                android:textColor="@android:color/white"
-                android:textSize="12sp"
-                android:visibility="gone"/>
+                <ImageButton
+                    android:id="@+id/cartButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/addproduct"
+                    android:contentDescription="Shopping Cart"/>
+
+                <TextView
+                    android:id="@+id/cartItemCount"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginEnd="12dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@drawable/circle_badge"
+                    android:gravity="center"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:visibility="gone"/>
+            </FrameLayout>
 
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
