@@ -2,68 +2,74 @@ package com.example.pharmacyl3;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.ListView;
-import android.widget.Toast;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-
-import com.example.pharmacyl3.DBHelper;
-import com.example.pharmacyl3.Product;
-import com.example.pharmacyl3.ProductAdapter;
-
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 
 public class AdminActivity extends AppCompatActivity {
 
-    private ListView lvProductsAdmin;
+    private RecyclerView rvProductsAdmin;
+    private ProductRecyclerAdapter adapter;
     private ArrayList<Product> productsList;
-    private ProductAdapter adapter;
     private DBHelper dbHelper;
     private Button btnAddProduct;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState){
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
         setContentView(R.layout.activity_admin);
 
-        lvProductsAdmin = findViewById(R.id.lvProductsAdmin);
-        btnAddProduct = findViewById(R.id.btnAddProduct);
+        // Apply window insets for edge-to-edge layout using the root view with id "main"
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
+
         dbHelper = new DBHelper(this);
 
-        // Load products from the database
+        // Initialize views
+        rvProductsAdmin = findViewById(R.id.rvProductsAdmin);
+        btnAddProduct = findViewById(R.id.btnAddProduct);
+
+        // Load existing products from the database
         productsList = dbHelper.getAllProducts();
-        adapter = new ProductAdapter(this, productsList);
-        lvProductsAdmin.setAdapter(adapter);
-
-        // Button to add a new product (for demonstration, a hardcoded product)
-        btnAddProduct.setOnClickListener(new View.OnClickListener(){
+        adapter = new ProductRecyclerAdapter(productsList, new ProductRecyclerAdapter.OnItemClickListener() {
             @Override
-            public void onClick(View v){
-                Product newProduct = new Product("Medicine A", "For headaches", 15.0, 50);
+            public void onItemClick(Product product) {
+                // For admin, you might want to open an edit screen or show product details.
+                // For now, we'll just show a simple toast.
+                // You can update this as needed.
+                // Example: Toast.makeText(AdminActivity.this, "Clicked: " + product.getName(), Toast.LENGTH_SHORT).show();
+            }
+        });
+        rvProductsAdmin.setLayoutManager(new LinearLayoutManager(this));
+        rvProductsAdmin.setAdapter(adapter);
+
+        // Set up the button to add a new product when clicked
+        btnAddProduct.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // For demonstration, create a new product with default values.
+                // In a real app, you'd likely show a dialog or a new screen to enter product details.
+                Product newProduct = new Product("New Medicine", "Sample description", 20.0, 50);
+
+                // Insert the new product into the database
                 dbHelper.insertProduct(newProduct);
-                refreshProducts();
-                Toast.makeText(AdminActivity.this, "Product added", Toast.LENGTH_SHORT).show();
+
+                // Refresh the product list by reloading data from the database
+                productsList.clear();
+                productsList.addAll(dbHelper.getAllProducts());
+                adapter.notifyDataSetChanged();
             }
         });
-
-        // Long click on a product to delete it
-        lvProductsAdmin.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener(){
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id){
-                Product product = productsList.get(position);
-                dbHelper.deleteProduct(product.getId());
-                refreshProducts();
-                Toast.makeText(AdminActivity.this, "Deleted " + product.getName(), Toast.LENGTH_SHORT).show();
-                return true;
-            }
-        });
-    }
-
-    // Helper method to refresh the product list
-    private void refreshProducts() {
-        productsList.clear();
-        productsList.addAll(dbHelper.getAllProducts());
-        adapter.notifyDataSetChanged();
     }
 }
