@@ -30,7 +30,7 @@
                     android:layout_height="48dp"
                     android:layout_marginEnd="16dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/addproduct"
+                    android:src="@drawable/ic_shopping_cart"
                     android:contentDescription="Shopping Cart"/>
 
                 <TextView
@@ -58,12 +58,13 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="16dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="16dp"
+                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="8dp"
                 app:cardElevation="4dp">
 
@@ -73,6 +74,7 @@
                     android:hint="Search Products"
                     android:padding="8dp"
                     app:startIconDrawable="@android:drawable/ic_menu_search"
+                    app:startIconTint="@color/primaryGreen"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
@@ -87,8 +89,7 @@
                 android:id="@+id/rvProducts"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:clipToPadding="false"
-                android:padding="8dp"/>
+                android:clipToPadding="false"/>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
