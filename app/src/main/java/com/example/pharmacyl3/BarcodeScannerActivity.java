@@ -29,6 +29,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     private Camera camera;
     private boolean isProcessingFrame = false;
     private BarcodeScanner barcodeScanner;
+    private boolean hasShownResult = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,7 +102,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
             camera.setPreviewCallback(new Camera.PreviewCallback() {
                 @Override
                 public void onPreviewFrame(byte[] data, Camera camera) {
-                    if (isProcessingFrame) return;
+                    if (isProcessingFrame || hasShownResult) return;
                     isProcessingFrame = true;
                     Camera.Size size = camera.getParameters().getPreviewSize();
                     InputImage image = InputImage.fromByteArray(
@@ -113,7 +114,8 @@ public class BarcodeScannerActivity extends AppCompatActivity {
                     );
                     barcodeScanner.process(image)
                             .addOnSuccessListener(barcodes -> {
-                                if (!barcodes.isEmpty()) {
+                                if (!barcodes.isEmpty() && !hasShownResult) {
+                                    hasShownResult = true;
                                     handleScanResult(barcodes.get(0).getRawValue());
                                 }
                                 isProcessingFrame = false;
@@ -154,6 +156,7 @@ public class BarcodeScannerActivity extends AppCompatActivity {
         if (barcodeScanner != null) {
             barcodeScanner.close();
         }
+        hasShownResult = false;
         super.onDestroy();
     }
 
@@ -161,7 +164,8 @@ public class BarcodeScannerActivity extends AppCompatActivity {
         new android.app.AlertDialog.Builder(this)
                 .setTitle("Scan Result")
                 .setMessage(barcode)
-                .setPositiveButton("OK", null)
+                .setPositiveButton("OK", (dialog, which) -> finish())
+                .setOnDismissListener(dialog -> finish())
                 .show();
     }
 }
