@@ -20,6 +20,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.common.InputImage;
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.Intent;
 import java.io.IOException;
 import java.util.List;
 
@@ -161,11 +162,9 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     }
 
     private void handleScanResult(String barcode) {
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("Scan Result")
-                .setMessage(barcode)
-                .setPositiveButton("OK", (dialog, which) -> finish())
-                .setOnDismissListener(dialog -> finish())
-                .show();
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("barcode", barcode);
+        setResult(RESULT_OK, resultIntent);
+        finish();
     }
 }

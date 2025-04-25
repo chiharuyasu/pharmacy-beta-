@@ -11,9 +11,10 @@ public class Product implements Serializable {
     private String expiryDate;
     private String manufacturer;
     private String imageUri; // New field for image
+    private String barcode;
 
     // Constructor for new products (without ID)
-    public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri) {
+    public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri, String barcode) {
         this.name = name;
         this.description = description;
         this.price = price;
@@ -21,10 +22,11 @@ public class Product implements Serializable {
         this.expiryDate = expiryDate;
         this.manufacturer = manufacturer;
         this.imageUri = imageUri;
+        this.barcode = barcode;
     }
 
     // Constructor for products retrieved from the database (with ID)
-    public Product(int id, String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri) {
+    public Product(int id, String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri, String barcode) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -33,6 +35,7 @@ public class Product implements Serializable {
         this.expiryDate = expiryDate;
         this.manufacturer = manufacturer;
         this.imageUri = imageUri;
+        this.barcode = barcode;
     }
 
     // Getters and setters
@@ -48,4 +51,6 @@ public class Product implements Serializable {
     public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
     public String getImageUri() { return imageUri; }
     public void setImageUri(String imageUri) { this.imageUri = imageUri; }
+    public String getBarcode() { return barcode; }
+    public void setBarcode(String barcode) { this.barcode = barcode; }
 }

@@ -48,11 +48,13 @@ public class AdminActivity extends AppCompatActivity {
     private DrawerLayout admindrawer;
     private NavigationView navView;
     private static final int REQUEST_IMAGE_PICK = 1001;
+    private static final int REQUEST_BARCODE_SCAN = 2002;
     private Uri selectedImageUri = null;
     private AlertDialog addProductDialog;
     private ImageView addDialogImageView;
     private AlertDialog editProductDialog;
     private ImageView editDialogImageView;
+    private String pendingBarcode = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +69,7 @@ public class AdminActivity extends AppCompatActivity {
         setupSearchFunctionality();
 
         // Setup FAB for adding new products
-        fabAddProduct.setOnClickListener(v -> showAddProductDialog());
+        fabAddProduct.setOnClickListener(v -> showAddProductDialog(null));
 
         // Update header on launch
         updateProfileHeader();
@@ -106,8 +108,7 @@ public class AdminActivity extends AppCompatActivity {
                 Intent intent = new Intent(AdminActivity.this, AdminDashboardActivity.class);
                 startActivity(intent);
             } else if (id == R.id.nav_barcode_scanner) {
-                Intent intent = new Intent(AdminActivity.this, BarcodeScannerActivity.class);
-                startActivity(intent);
+                launchBarcodeScanner();
             } else if (id == R.id.nav_logout) {
                 // Handle Logout
                 finish();
@@ -167,7 +168,21 @@ public class AdminActivity extends AppCompatActivity {
         adapter.updateProducts(filteredList);
     }
 
-    private void showAddProductDialog() {
+    private void showAddProductDialog(String barcode) {
+        // Check for duplicate barcode
+        if (barcode != null) {
+            Product existingProduct = dbHelper.getProductByBarcode(barcode);
+            if (existingProduct != null) {
+                // Show warning and product details
+                new AlertDialog.Builder(this)
+                        .setTitle("Duplicate Barcode")
+                        .setMessage("A product with this barcode already exists. Would you like to view or edit it?")
+                        .setPositiveButton("View/Edit", (dialog, which) -> showEditProductDialog(existingProduct))
+                        .setNegativeButton("Cancel", null)
+                        .show();
+                return;
+            }
+        }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_product, null);
         TextInputEditText etName = dialogView.findViewById(R.id.etProductName);
         TextInputEditText etDescription = dialogView.findViewById(R.id.etProductDescription);
@@ -175,8 +190,13 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etStock = dialogView.findViewById(R.id.etProductStock);
         TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
         TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
+        TextInputEditText etBarcode = dialogView.findViewById(R.id.etProductBarcode);
         ImageView ivProductImage = dialogView.findViewById(R.id.ivProductImage);
         Button btnSelectImage = dialogView.findViewById(R.id.btnSelectImage);
+
+        if (barcode != null) {
+            etBarcode.setText(barcode);
+        }
 
         selectedImageUri = null;
         addDialogImageView = ivProductImage;
@@ -199,11 +219,17 @@ public class AdminActivity extends AppCompatActivity {
                         int stock = Integer.parseInt(etStock.getText().toString());
                         String expiryDate = etExpiryDate.getText().toString();
                         String manufacturer = etManufacturer.getText().toString();
+                        String barcodeValue = etBarcode.getText().toString();
                         String imageUriStr = null;
                         if (selectedImageUri != null) {
                             imageUriStr = copyImageToInternalStorage(selectedImageUri, "product_" + System.currentTimeMillis() + ".jpg");
                         }
-                        Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer, imageUriStr);
+                        // Check again for duplicate just before adding
+                        if (dbHelper.getProductByBarcode(barcodeValue) != null) {
+                            showSnackbar("A product with this barcode already exists!");
+                            return;
+                        }
+                        Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer, imageUriStr, barcodeValue);
                         dbHelper.insertProduct(newProduct);
                         refreshData();
                         showSnackbar("Product added successfully");
@@ -225,6 +251,7 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etStock = dialogView.findViewById(R.id.etProductStock);
         TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
         TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
+        TextInputEditText etBarcode = dialogView.findViewById(R.id.etProductBarcode);
         ImageView ivProductImage = dialogView.findViewById(R.id.ivProductImage);
         Button btnSelectImage = dialogView.findViewById(R.id.btnSelectImage);
 
@@ -235,6 +262,7 @@ public class AdminActivity extends AppCompatActivity {
         etStock.setText(String.valueOf(product.getStock()));
         etExpiryDate.setText(product.getExpiryDate());
         etManufacturer.setText(product.getManufacturer());
+        etBarcode.setText(product.getBarcode());
         if (product.getImageUri() != null && !product.getImageUri().isEmpty()) {
             try {
                 ivProductImage.setImageURI(Uri.parse(product.getImageUri()));
@@ -260,6 +288,9 @@ public class AdminActivity extends AppCompatActivity {
                         if (selectedImageUri != null) {
                             imageUriStr = copyImageToInternalStorage(selectedImageUri, "product_" + System.currentTimeMillis() + ".jpg");
                         }
+                        String barcodeValue = "";
+                        TextInputEditText etBarcode1 = dialogView.findViewById(R.id.etProductBarcode);
+                        if (etBarcode1 != null) barcodeValue = etBarcode1.getText().toString();
                         Product updatedProduct = new Product(
                             product.getId(),
                             etName.getText().toString(),
@@ -268,7 +299,8 @@ public class AdminActivity extends AppCompatActivity {
                             Integer.parseInt(etStock.getText().toString()),
                             etExpiryDate.getText().toString(),
                             etManufacturer.getText().toString(),
-                            imageUriStr
+                            imageUriStr,
+                            barcodeValue
                         );
                         dbHelper.updateProduct(updatedProduct);
                         refreshData();
@@ -350,6 +382,12 @@ public class AdminActivity extends AppCompatActivity {
                 editDialogImageView.setImageURI(selectedImageUri);
             }
         }
+        if (requestCode == REQUEST_BARCODE_SCAN && resultCode == RESULT_OK && data != null) {
+            String scannedBarcode = data.getStringExtra("barcode");
+            if (scannedBarcode != null) {
+                showAddProductDialog(scannedBarcode);
+            }
+        }
         if (requestCode == 2001 && resultCode == Activity.RESULT_OK) {
             updateProfileHeader();
         }
@@ -405,5 +443,10 @@ public class AdminActivity extends AppCompatActivity {
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         canvas.drawBitmap(bitmap, null, rect, paint);
         return output;
+    }
+
+    private void launchBarcodeScanner() {
+        Intent intent = new Intent(this, BarcodeScannerActivity.class);
+        startActivityForResult(intent, REQUEST_BARCODE_SCAN);
     }
 }

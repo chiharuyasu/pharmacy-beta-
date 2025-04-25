@@ -14,7 +14,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // Database name and version
     private static final String DATABASE_NAME = "Pharmacy.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 3;
 
     // Table and column names
     public static final String TABLE_PRODUCTS = "Products";
@@ -26,6 +26,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_EXPIRY_DATE = "expiryDate";
     public static final String COLUMN_MANUFACTURER = "manufacturer";
     public static final String COLUMN_IMAGE_URI = "imageUri";
+    public static final String COLUMN_BARCODE = "barcode";
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -42,7 +43,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 + COLUMN_STOCK + " INTEGER, "
                 + COLUMN_EXPIRY_DATE + " TEXT, "
                 + COLUMN_MANUFACTURER + " TEXT, "
-                + COLUMN_IMAGE_URI + " TEXT)";
+                + COLUMN_IMAGE_URI + " TEXT, "
+                + COLUMN_BARCODE + " TEXT)";
         db.execSQL(CREATE_PRODUCTS_TABLE);
     }
 
@@ -51,6 +53,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE " + TABLE_PRODUCTS + " ADD COLUMN " + COLUMN_IMAGE_URI + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_PRODUCTS + " ADD COLUMN " + COLUMN_BARCODE + " TEXT");
         }
     }
 
@@ -65,6 +68,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_EXPIRY_DATE, product.getExpiryDate());
         values.put(COLUMN_MANUFACTURER, product.getManufacturer());
         values.put(COLUMN_IMAGE_URI, product.getImageUri());
+        values.put(COLUMN_BARCODE, product.getBarcode());
         db.insert(TABLE_PRODUCTS, null, values);
         db.close();
     }
@@ -80,6 +84,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_EXPIRY_DATE, product.getExpiryDate());
         values.put(COLUMN_MANUFACTURER, product.getManufacturer());
         values.put(COLUMN_IMAGE_URI, product.getImageUri());
+        values.put(COLUMN_BARCODE, product.getBarcode());
         db.update(TABLE_PRODUCTS, values, COLUMN_ID + "=?",
                 new String[]{String.valueOf(product.getId())});
         db.close();
@@ -107,11 +112,34 @@ public class DBHelper extends SQLiteOpenHelper {
                 String expiryDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXPIRY_DATE));
                 String manufacturer = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MANUFACTURER));
                 String imageUri = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URI));
-                products.add(new Product(id, name, description, price, stock, expiryDate, manufacturer, imageUri));
+                String barcode = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BARCODE));
+                products.add(new Product(id, name, description, price, stock, expiryDate, manufacturer, imageUri, barcode));
             } while (cursor.moveToNext());
         }
         cursor.close();
         db.close();
         return products;
+    }
+
+    // Retrieve a product by barcode
+    public Product getProductByBarcode(String barcode) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_PRODUCTS, null, COLUMN_BARCODE + "=?", new String[]{barcode}, null, null, null);
+        Product product = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID));
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME));
+            String description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DESCRIPTION));
+            double price = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_PRICE));
+            int stock = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_STOCK));
+            String expiryDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXPIRY_DATE));
+            String manufacturer = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MANUFACTURER));
+            String imageUri = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URI));
+            String barcodeValue = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BARCODE));
+            product = new Product(id, name, description, price, stock, expiryDate, manufacturer, imageUri, barcodeValue);
+        }
+        if (cursor != null) cursor.close();
+        db.close();
+        return product;
     }
 }
