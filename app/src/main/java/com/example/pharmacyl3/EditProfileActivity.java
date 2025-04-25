@@ -40,8 +40,15 @@ public class EditProfileActivity extends AppCompatActivity {
             try {
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), profilePicUri);
                 imageViewProfileEdit.setImageBitmap(bitmap);
-            } catch (IOException e) {
+            } catch (SecurityException | IOException e) {
                 e.printStackTrace();
+                imageViewProfileEdit.setImageResource(R.drawable.ic_person);
+                // Optionally clear the invalid URI
+                ProfileManager.saveProfile(this,
+                    ProfileManager.getName(this),
+                    ProfileManager.getPhone(this),
+                    null
+                );
             }
         }
 
@@ -68,13 +75,18 @@ public class EditProfileActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK && data != null) {
-            selectedImageUri = data.getData();
-            if (selectedImageUri != null) {
+            Uri pickedImageUri = data.getData();
+            if (pickedImageUri != null) {
                 try {
+                    // Copy to internal storage for persistence
+                    String fileName = "profile_photo.jpg";
+                    String filePath = FileUtils.copyUriToInternalStorage(this, pickedImageUri, fileName);
+                    selectedImageUri = Uri.fromFile(new java.io.File(filePath));
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImageUri);
                     imageViewProfileEdit.setImageBitmap(bitmap);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    Toast.makeText(this, "Failed to save profile photo", Toast.LENGTH_SHORT).show();
                 }
             }
         }

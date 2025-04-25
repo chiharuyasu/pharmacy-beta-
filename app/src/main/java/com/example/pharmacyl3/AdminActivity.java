@@ -2,6 +2,15 @@ package com.example.pharmacyl3;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.RectF;
+import android.graphics.Xfermode;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -364,12 +373,34 @@ public class AdminActivity extends AppCompatActivity {
         if (!phone.isEmpty()) textViewEmail.setText(phone);
         if (profilePicUri != null) {
             try {
-                imageViewProfile.setImageURI(profilePicUri);
+                // Use file path for image
+                Bitmap bitmap = BitmapFactory.decodeFile(profilePicUri.getPath());
+                if (bitmap != null) {
+                    Bitmap circularBitmap = getCircularBitmap(bitmap);
+                    imageViewProfile.setImageBitmap(circularBitmap);
+                } else {
+                    imageViewProfile.setImageResource(R.drawable.ic_person);
+                }
             } catch (Exception e) {
                 imageViewProfile.setImageResource(R.drawable.ic_person);
             }
         } else {
             imageViewProfile.setImageResource(R.drawable.ic_person);
         }
+    }
+
+    private Bitmap getCircularBitmap(Bitmap bitmap) {
+        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+
+        Canvas canvas = new Canvas(output);
+        final Paint paint = new Paint();
+        final RectF rect = new RectF(0, 0, size, size);
+        float radius = size / 2f;
+        paint.setAntiAlias(true);
+        canvas.drawCircle(radius, radius, radius, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, null, rect, paint);
+        return output;
     }
 }

@@ -15,7 +15,8 @@
         android:background="@drawable/circle_background"
         android:contentDescription="Profile Picture"
         android:layout_gravity="center_horizontal"
-        android:padding="4dp" />
+        android:padding="4dp"
+        android:scaleType="centerCrop" />
 
     <TextView
         android:id="@+id/textViewName"
