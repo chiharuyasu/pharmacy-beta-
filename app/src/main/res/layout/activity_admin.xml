@@ -87,5 +87,6 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="start"
+        app:headerLayout="@layout/nav_header_admin"
         app:menu="@menu/menu_admin_drawer"/>
 </androidx.drawerlayout.widget.DrawerLayout>

@@ -5,6 +5,10 @@
         android:title="Home"
         android:icon="@android:drawable/ic_menu_view"/>
     <item
+        android:id="@+id/nav_edit_profile"
+        android:title="Edit Profile"
+        android:icon="@android:drawable/ic_menu_edit"/>
+    <item
         android:id="@+id/nav_products"
         android:title="Products"
         android:icon="@android:drawable/ic_menu_agenda"/>
