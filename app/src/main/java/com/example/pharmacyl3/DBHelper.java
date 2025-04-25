@@ -23,6 +23,8 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_DESCRIPTION = "description";
     public static final String COLUMN_PRICE = "price";
     public static final String COLUMN_STOCK = "stock";
+    public static final String COLUMN_EXPIRY_DATE = "expiryDate";
+    public static final String COLUMN_MANUFACTURER = "manufacturer";
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -36,7 +38,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 + COLUMN_NAME + " TEXT, "
                 + COLUMN_DESCRIPTION + " TEXT, "
                 + COLUMN_PRICE + " REAL, "
-                + COLUMN_STOCK + " INTEGER)";
+                + COLUMN_STOCK + " INTEGER, "
+                + COLUMN_EXPIRY_DATE + " TEXT, "
+                + COLUMN_MANUFACTURER + " TEXT)";
         db.execSQL(CREATE_PRODUCTS_TABLE);
     }
 
@@ -56,6 +60,8 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_DESCRIPTION, product.getDescription());
         values.put(COLUMN_PRICE, product.getPrice());
         values.put(COLUMN_STOCK, product.getStock());
+        values.put(COLUMN_EXPIRY_DATE, product.getExpiryDate());
+        values.put(COLUMN_MANUFACTURER, product.getManufacturer());
         db.insert(TABLE_PRODUCTS, null, values);
         db.close();
     }
@@ -68,6 +74,8 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_DESCRIPTION, product.getDescription());
         values.put(COLUMN_PRICE, product.getPrice());
         values.put(COLUMN_STOCK, product.getStock());
+        values.put(COLUMN_EXPIRY_DATE, product.getExpiryDate());
+        values.put(COLUMN_MANUFACTURER, product.getManufacturer());
         db.update(TABLE_PRODUCTS, values, COLUMN_ID + "=?",
                 new String[]{String.valueOf(product.getId())});
         db.close();
@@ -92,7 +100,9 @@ public class DBHelper extends SQLiteOpenHelper {
                 String description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DESCRIPTION));
                 double price = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_PRICE));
                 int stock = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_STOCK));
-                products.add(new Product(id, name, description, price, stock));
+                String expiryDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXPIRY_DATE));
+                String manufacturer = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MANUFACTURER));
+                products.add(new Product(id, name, description, price, stock, expiryDate, manufacturer));
             } while (cursor.moveToNext());
         }
         cursor.close();

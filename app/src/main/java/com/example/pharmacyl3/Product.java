@@ -8,22 +8,28 @@ public class Product implements Serializable {
     private String description;
     private double price;
     private int stock;
+    private String expiryDate;
+    private String manufacturer;
 
     // Constructor for new products (without ID)
-    public Product(String name, String description, double price, int stock) {
+    public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
+        this.expiryDate = expiryDate;
+        this.manufacturer = manufacturer;
     }
 
     // Constructor for products retrieved from the database (with ID)
-    public Product(int id, String name, String description, double price, int stock) {
+    public Product(int id, String name, String description, double price, int stock, String expiryDate, String manufacturer) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
+        this.expiryDate = expiryDate;
+        this.manufacturer = manufacturer;
     }
 
     // Getters and setters
@@ -33,4 +39,8 @@ public class Product implements Serializable {
     public double getPrice() { return price; }
     public int getStock() { return stock; }
     public void setStock(int stock) { this.stock = stock; }
+    public String getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(String expiryDate) { this.expiryDate = expiryDate; }
+    public String getManufacturer() { return manufacturer; }
+    public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
 }

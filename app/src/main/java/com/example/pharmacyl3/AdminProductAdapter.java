@@ -40,6 +40,8 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
         holder.tvProductName.setText(product.getName());
         holder.tvProductPrice.setText(String.format("$%.2f", product.getPrice()));
         holder.tvProductDescription.setText(product.getDescription());
+        holder.tvProductExpiryDate.setText("Expiry Date: " + product.getExpiryDate());
+        holder.tvProductManufacturer.setText("Manufacturer: " + product.getManufacturer());
         
         holder.itemView.setOnClickListener(v -> listener.onItemClick(product));
         holder.btnEdit.setOnClickListener(v -> listener.onEditClick(product));
@@ -60,6 +62,8 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
         TextView tvProductName;
         TextView tvProductPrice;
         TextView tvProductDescription;
+        TextView tvProductExpiryDate;
+        TextView tvProductManufacturer;
         MaterialButton btnEdit;
         MaterialButton btnDelete;
 
@@ -68,6 +72,8 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
             tvProductName = itemView.findViewById(R.id.tvProductName);
             tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
             tvProductDescription = itemView.findViewById(R.id.tvProductDescription);
+            tvProductExpiryDate = itemView.findViewById(R.id.tvProductExpiryDate);
+            tvProductManufacturer = itemView.findViewById(R.id.tvProductManufacturer);
             btnEdit = itemView.findViewById(R.id.btnEdit);
             btnDelete = itemView.findViewById(R.id.btnDelete);
         }

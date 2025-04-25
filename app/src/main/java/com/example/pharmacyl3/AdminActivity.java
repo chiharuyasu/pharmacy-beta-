@@ -4,16 +4,22 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import java.util.ArrayList;
+import com.example.pharmacyl3.R;
 
 public class AdminActivity extends AppCompatActivity {
 
@@ -23,6 +29,8 @@ public class AdminActivity extends AppCompatActivity {
     private DBHelper dbHelper;
     private FloatingActionButton fabAddProduct;
     private TextInputEditText searchEditText;
+    private DrawerLayout admindrawer;
+    private NavigationView navView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +40,7 @@ public class AdminActivity extends AppCompatActivity {
         // Initialize views
         initializeViews();
         setupToolbar();
+        setupDrawer();
         setupRecyclerView();
         setupSearchFunctionality();
 
@@ -43,11 +52,34 @@ public class AdminActivity extends AppCompatActivity {
         rvProducts = findViewById(R.id.rvProducts);
         fabAddProduct = findViewById(R.id.fabAddProduct);
         searchEditText = findViewById(R.id.searchEditText);
+        admindrawer = findViewById(R.id.admindrawer);
+        navView = findViewById(R.id.nav_view);
     }
 
     private void setupToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+    }
+
+    private void setupDrawer() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_menu_overflow_material);
+        toolbar.setNavigationOnClickListener(v -> admindrawer.openDrawer(GravityCompat.START));
+        navView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                // Handle Home
+            } else if (id == R.id.nav_products) {
+                // Handle Products
+            } else if (id == R.id.nav_logout) {
+                // Handle Logout
+                finish();
+            }
+            admindrawer.closeDrawer(GravityCompat.START);
+            return true;
+        });
     }
 
     private void setupRecyclerView() {
@@ -106,6 +138,8 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etDescription = dialogView.findViewById(R.id.etProductDescription);
         TextInputEditText etPrice = dialogView.findViewById(R.id.etProductPrice);
         TextInputEditText etStock = dialogView.findViewById(R.id.etProductStock);
+        TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
+        TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Add New Product")
@@ -116,8 +150,10 @@ public class AdminActivity extends AppCompatActivity {
                         String description = etDescription.getText().toString();
                         double price = Double.parseDouble(etPrice.getText().toString());
                         int stock = Integer.parseInt(etStock.getText().toString());
+                        String expiryDate = etExpiryDate.getText().toString();
+                        String manufacturer = etManufacturer.getText().toString();
 
-                        Product newProduct = new Product(name, description, price, stock);
+                        Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer);
                         dbHelper.insertProduct(newProduct);
                         refreshData();
                         showSnackbar("Product added successfully");
@@ -135,12 +171,16 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etDescription = dialogView.findViewById(R.id.etProductDescription);
         TextInputEditText etPrice = dialogView.findViewById(R.id.etProductPrice);
         TextInputEditText etStock = dialogView.findViewById(R.id.etProductStock);
+        TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
+        TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
 
         // Pre-fill current values
         etName.setText(product.getName());
         etDescription.setText(product.getDescription());
         etPrice.setText(String.valueOf(product.getPrice()));
         etStock.setText(String.valueOf(product.getStock()));
+        etExpiryDate.setText(product.getExpiryDate());
+        etManufacturer.setText(product.getManufacturer());
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Edit Product")
@@ -152,7 +192,9 @@ public class AdminActivity extends AppCompatActivity {
                             etName.getText().toString(),
                             etDescription.getText().toString(),
                             Double.parseDouble(etPrice.getText().toString()),
-                            Integer.parseInt(etStock.getText().toString())
+                            Integer.parseInt(etStock.getText().toString()),
+                            etExpiryDate.getText().toString(),
+                            etManufacturer.getText().toString()
                         );
                         dbHelper.updateProduct(updatedProduct);
                         refreshData();
@@ -195,6 +237,15 @@ public class AdminActivity extends AppCompatActivity {
 
     private void showSnackbar(String message) {
         Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            admindrawer.openDrawer(GravityCompat.START);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
