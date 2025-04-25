@@ -73,6 +73,10 @@ public class AdminActivity extends AppCompatActivity {
                 // Handle Home
             } else if (id == R.id.nav_products) {
                 // Handle Products
+            } else if (id == R.id.nav_dashboard) {
+                // Show dashboard activity
+                Intent intent = new Intent(AdminActivity.this, AdminDashboardActivity.class);
+                startActivity(intent);
             } else if (id == R.id.nav_logout) {
                 // Handle Logout
                 finish();
