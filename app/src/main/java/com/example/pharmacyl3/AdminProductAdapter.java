@@ -1,13 +1,16 @@
 package com.example.pharmacyl3;
 
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import java.util.ArrayList;
+import java.io.File;
 
 public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapter.ViewHolder> {
 
@@ -43,6 +46,17 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
         holder.tvProductExpiryDate.setText("Expiry Date: " + product.getExpiryDate());
         holder.tvProductManufacturer.setText("Manufacturer: " + product.getManufacturer());
         
+        if (product.getImageUri() != null && !product.getImageUri().isEmpty()) {
+            try {
+                Uri uri = product.getImageUri().startsWith("/") ? Uri.fromFile(new File(product.getImageUri())) : Uri.parse(product.getImageUri());
+                holder.ivProductImage.setImageURI(uri);
+            } catch (Exception e) {
+                holder.ivProductImage.setImageResource(R.drawable.ic_add_photo);
+            }
+        } else {
+            holder.ivProductImage.setImageResource(R.drawable.ic_add_photo);
+        }
+        
         holder.itemView.setOnClickListener(v -> listener.onItemClick(product));
         holder.btnEdit.setOnClickListener(v -> listener.onEditClick(product));
         holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(product));
@@ -58,16 +72,11 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
         notifyDataSetChanged();
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvProductName;
-        TextView tvProductPrice;
-        TextView tvProductDescription;
-        TextView tvProductExpiryDate;
-        TextView tvProductManufacturer;
-        MaterialButton btnEdit;
-        MaterialButton btnDelete;
-
-        ViewHolder(@NonNull View itemView) {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView tvProductName, tvProductPrice, tvProductDescription, tvProductExpiryDate, tvProductManufacturer;
+        MaterialButton btnEdit, btnDelete;
+        ImageView ivProductImage;
+        public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvProductName = itemView.findViewById(R.id.tvProductName);
             tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
@@ -76,6 +85,7 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
             tvProductManufacturer = itemView.findViewById(R.id.tvProductManufacturer);
             btnEdit = itemView.findViewById(R.id.btnEdit);
             btnDelete = itemView.findViewById(R.id.btnDelete);
+            ivProductImage = itemView.findViewById(R.id.ivProductImage);
         }
     }
 } 

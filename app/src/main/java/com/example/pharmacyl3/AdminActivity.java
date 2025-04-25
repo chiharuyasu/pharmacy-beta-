@@ -1,6 +1,8 @@
 package com.example.pharmacyl3;
 
+import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,8 +20,12 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import android.widget.ImageView;
+import android.widget.Button;
 import java.util.ArrayList;
 import com.example.pharmacyl3.R;
+import android.app.AlertDialog;
+import java.io.IOException;
 
 public class AdminActivity extends AppCompatActivity {
 
@@ -31,6 +37,12 @@ public class AdminActivity extends AppCompatActivity {
     private TextInputEditText searchEditText;
     private DrawerLayout admindrawer;
     private NavigationView navView;
+    private static final int REQUEST_IMAGE_PICK = 1001;
+    private Uri selectedImageUri = null;
+    private AlertDialog addProductDialog;
+    private ImageView addDialogImageView;
+    private AlertDialog editProductDialog;
+    private ImageView editDialogImageView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,11 +156,23 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etStock = dialogView.findViewById(R.id.etProductStock);
         TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
         TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
+        ImageView ivProductImage = dialogView.findViewById(R.id.ivProductImage);
+        Button btnSelectImage = dialogView.findViewById(R.id.btnSelectImage);
 
-        new MaterialAlertDialogBuilder(this)
+        selectedImageUri = null;
+        addDialogImageView = ivProductImage;
+        final String[] savedImagePath = {null};
+
+        btnSelectImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            startActivityForResult(intent, REQUEST_IMAGE_PICK);
+        });
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Add New Product")
                 .setView(dialogView)
-                .setPositiveButton("Add", (dialog, which) -> {
+                .setPositiveButton("Add", (dialogInterface, which) -> {
                     try {
                         String name = etName.getText().toString();
                         String description = etDescription.getText().toString();
@@ -156,8 +180,11 @@ public class AdminActivity extends AppCompatActivity {
                         int stock = Integer.parseInt(etStock.getText().toString());
                         String expiryDate = etExpiryDate.getText().toString();
                         String manufacturer = etManufacturer.getText().toString();
-
-                        Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer);
+                        String imageUriStr = null;
+                        if (selectedImageUri != null) {
+                            imageUriStr = copyImageToInternalStorage(selectedImageUri, "product_" + System.currentTimeMillis() + ".jpg");
+                        }
+                        Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer, imageUriStr);
                         dbHelper.insertProduct(newProduct);
                         refreshData();
                         showSnackbar("Product added successfully");
@@ -166,7 +193,9 @@ public class AdminActivity extends AppCompatActivity {
                     }
                 })
                 .setNegativeButton("Cancel", null)
-                .show();
+                .create();
+        addProductDialog = dialog;
+        dialog.show();
     }
 
     private void showEditProductDialog(Product product) {
@@ -177,6 +206,8 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etStock = dialogView.findViewById(R.id.etProductStock);
         TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
         TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
+        ImageView ivProductImage = dialogView.findViewById(R.id.ivProductImage);
+        Button btnSelectImage = dialogView.findViewById(R.id.btnSelectImage);
 
         // Pre-fill current values
         etName.setText(product.getName());
@@ -185,12 +216,31 @@ public class AdminActivity extends AppCompatActivity {
         etStock.setText(String.valueOf(product.getStock()));
         etExpiryDate.setText(product.getExpiryDate());
         etManufacturer.setText(product.getManufacturer());
+        if (product.getImageUri() != null && !product.getImageUri().isEmpty()) {
+            try {
+                ivProductImage.setImageURI(Uri.parse(product.getImageUri()));
+            } catch (Exception e) {
+                ivProductImage.setImageResource(R.drawable.ic_add_photo);
+            }
+        } else {
+            ivProductImage.setImageResource(R.drawable.ic_add_photo);
+        }
+        editDialogImageView = ivProductImage;
+        btnSelectImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            startActivityForResult(intent, REQUEST_IMAGE_PICK + 1);
+        });
 
-        new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Edit Product")
                 .setView(dialogView)
-                .setPositiveButton("Save", (dialog, which) -> {
+                .setPositiveButton("Save", (dialogInterface, which) -> {
                     try {
+                        String imageUriStr = product.getImageUri();
+                        if (selectedImageUri != null) {
+                            imageUriStr = copyImageToInternalStorage(selectedImageUri, "product_" + System.currentTimeMillis() + ".jpg");
+                        }
                         Product updatedProduct = new Product(
                             product.getId(),
                             etName.getText().toString(),
@@ -198,7 +248,8 @@ public class AdminActivity extends AppCompatActivity {
                             Double.parseDouble(etPrice.getText().toString()),
                             Integer.parseInt(etStock.getText().toString()),
                             etExpiryDate.getText().toString(),
-                            etManufacturer.getText().toString()
+                            etManufacturer.getText().toString(),
+                            imageUriStr
                         );
                         dbHelper.updateProduct(updatedProduct);
                         refreshData();
@@ -208,7 +259,9 @@ public class AdminActivity extends AppCompatActivity {
                     }
                 })
                 .setNegativeButton("Cancel", null)
-                .show();
+                .create();
+        editProductDialog = dialog;
+        dialog.show();
     }
 
     private void showDeleteConfirmationDialog(Product product) {
@@ -230,6 +283,7 @@ public class AdminActivity extends AppCompatActivity {
         intent.putExtra("description", product.getDescription());
         intent.putExtra("price", product.getPrice());
         intent.putExtra("stock", product.getStock());
+        intent.putExtra("imageUri", product.getImageUri());
         startActivity(intent);
     }
 
@@ -243,6 +297,16 @@ public class AdminActivity extends AppCompatActivity {
         Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT).show();
     }
 
+    private String copyImageToInternalStorage(Uri uri, String fileName) {
+        try {
+            return FileUtils.copyUriToInternalStorage(this, uri, fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+            showSnackbar("Failed to save image");
+            return null;
+        }
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
@@ -250,6 +314,23 @@ public class AdminActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == Activity.RESULT_OK && data != null) {
+            selectedImageUri = data.getData();
+            if (addDialogImageView != null && selectedImageUri != null) {
+                addDialogImageView.setImageURI(selectedImageUri);
+            }
+        }
+        if (requestCode == REQUEST_IMAGE_PICK + 1 && resultCode == Activity.RESULT_OK && data != null) {
+            selectedImageUri = data.getData();
+            if (editDialogImageView != null && selectedImageUri != null) {
+                editDialogImageView.setImageURI(selectedImageUri);
+            }
+        }
     }
 
     @Override

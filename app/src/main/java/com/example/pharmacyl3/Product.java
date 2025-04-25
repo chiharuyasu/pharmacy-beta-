@@ -10,19 +10,21 @@ public class Product implements Serializable {
     private int stock;
     private String expiryDate;
     private String manufacturer;
+    private String imageUri; // New field for image
 
     // Constructor for new products (without ID)
-    public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer) {
+    public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
         this.expiryDate = expiryDate;
         this.manufacturer = manufacturer;
+        this.imageUri = imageUri;
     }
 
     // Constructor for products retrieved from the database (with ID)
-    public Product(int id, String name, String description, double price, int stock, String expiryDate, String manufacturer) {
+    public Product(int id, String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -30,6 +32,7 @@ public class Product implements Serializable {
         this.stock = stock;
         this.expiryDate = expiryDate;
         this.manufacturer = manufacturer;
+        this.imageUri = imageUri;
     }
 
     // Getters and setters
@@ -43,4 +46,6 @@ public class Product implements Serializable {
     public void setExpiryDate(String expiryDate) { this.expiryDate = expiryDate; }
     public String getManufacturer() { return manufacturer; }
     public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
+    public String getImageUri() { return imageUri; }
+    public void setImageUri(String imageUri) { this.imageUri = imageUri; }
 }

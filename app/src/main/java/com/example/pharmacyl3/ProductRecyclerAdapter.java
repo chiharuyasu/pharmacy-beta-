@@ -1,8 +1,10 @@
 package com.example.pharmacyl3;
 
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -54,8 +56,19 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
         Product product = products.get(position);
         
         holder.tvProductName.setText(product.getName());
-        holder.tvProductDescription.setText(product.getDescription());
         holder.tvProductPrice.setText(String.format("$%.2f", product.getPrice()));
+        holder.tvProductDescription.setText(product.getDescription());
+        if (product.getImageUri() != null && !product.getImageUri().isEmpty()) {
+            try {
+                // If it's a file path, use file:// URI
+                Uri uri = product.getImageUri().startsWith("/") ? Uri.fromFile(new java.io.File(product.getImageUri())) : Uri.parse(product.getImageUri());
+                holder.ivProductImage.setImageURI(uri);
+            } catch (Exception e) {
+                holder.ivProductImage.setImageResource(R.drawable.ic_add_photo);
+            }
+        } else {
+            holder.ivProductImage.setImageResource(R.drawable.ic_add_photo);
+        }
 
         // Show/hide add to cart button based on view type
         if (isCustomerView) {
@@ -74,16 +87,16 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvProductName;
-        TextView tvProductDescription;
-        TextView tvProductPrice;
+        TextView tvProductName, tvProductPrice, tvProductDescription;
         MaterialButton btnAddToCart;
+        ImageView ivProductImage;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvProductName = itemView.findViewById(R.id.tvProductName);
-            tvProductDescription = itemView.findViewById(R.id.tvProductDescription);
             tvProductPrice = itemView.findViewById(R.id.tvProductPrice);
+            tvProductDescription = itemView.findViewById(R.id.tvProductDescription);
+            ivProductImage = itemView.findViewById(R.id.ivProductImage);
             btnAddToCart = itemView.findViewById(R.id.btnAddToCart);
         }
     }

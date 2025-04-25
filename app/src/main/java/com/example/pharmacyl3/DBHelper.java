@@ -14,7 +14,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // Database name and version
     private static final String DATABASE_NAME = "Pharmacy.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Table and column names
     public static final String TABLE_PRODUCTS = "Products";
@@ -25,6 +25,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_STOCK = "stock";
     public static final String COLUMN_EXPIRY_DATE = "expiryDate";
     public static final String COLUMN_MANUFACTURER = "manufacturer";
+    public static final String COLUMN_IMAGE_URI = "imageUri";
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -40,16 +41,17 @@ public class DBHelper extends SQLiteOpenHelper {
                 + COLUMN_PRICE + " REAL, "
                 + COLUMN_STOCK + " INTEGER, "
                 + COLUMN_EXPIRY_DATE + " TEXT, "
-                + COLUMN_MANUFACTURER + " TEXT)";
+                + COLUMN_MANUFACTURER + " TEXT, "
+                + COLUMN_IMAGE_URI + " TEXT)";
         db.execSQL(CREATE_PRODUCTS_TABLE);
     }
 
     // Upgrade method (if database version changes)
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Drop the old table and create a new one
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCTS);
-        onCreate(db);
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + TABLE_PRODUCTS + " ADD COLUMN " + COLUMN_IMAGE_URI + " TEXT");
+        }
     }
 
     // Insert a new product into the database
@@ -62,6 +64,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_STOCK, product.getStock());
         values.put(COLUMN_EXPIRY_DATE, product.getExpiryDate());
         values.put(COLUMN_MANUFACTURER, product.getManufacturer());
+        values.put(COLUMN_IMAGE_URI, product.getImageUri());
         db.insert(TABLE_PRODUCTS, null, values);
         db.close();
     }
@@ -76,6 +79,7 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(COLUMN_STOCK, product.getStock());
         values.put(COLUMN_EXPIRY_DATE, product.getExpiryDate());
         values.put(COLUMN_MANUFACTURER, product.getManufacturer());
+        values.put(COLUMN_IMAGE_URI, product.getImageUri());
         db.update(TABLE_PRODUCTS, values, COLUMN_ID + "=?",
                 new String[]{String.valueOf(product.getId())});
         db.close();
@@ -102,7 +106,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 int stock = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_STOCK));
                 String expiryDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXPIRY_DATE));
                 String manufacturer = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MANUFACTURER));
-                products.add(new Product(id, name, description, price, stock, expiryDate, manufacturer));
+                String imageUri = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URI));
+                products.add(new Product(id, name, description, price, stock, expiryDate, manufacturer, imageUri));
             } while (cursor.moveToNext());
         }
         cursor.close();

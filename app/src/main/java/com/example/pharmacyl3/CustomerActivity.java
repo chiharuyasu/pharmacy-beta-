@@ -68,6 +68,7 @@ public class CustomerActivity extends AppCompatActivity {
                     intent.putExtra("description", product.getDescription());
                     intent.putExtra("price", product.getPrice());
                     intent.putExtra("stock", product.getStock());
+                    intent.putExtra("imageUri", product.getImageUri());
                     startActivity(intent);
                 }
 
