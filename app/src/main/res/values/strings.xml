@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Pharmacyl3</string>
     <string name="add_product">Add Product</string>
+    <string name="barcode_scanner">Barcode Scanner</string>
 </resources>
