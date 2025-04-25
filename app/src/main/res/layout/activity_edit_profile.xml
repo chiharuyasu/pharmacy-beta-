@@ -38,6 +38,43 @@
         android:inputType="phone"
         android:layout_marginTop="8dp" />
 
+    <EditText
+        android:id="@+id/editTextLicenseNumber"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="License Number"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/editTextPharmacyName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Pharmacy Name"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/editTextPharmacyAddress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Pharmacy Address"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/editTextExperience"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Years of Experience"
+        android:inputType="number"
+        android:layout_marginTop="8dp" />
+
+    <EditText
+        android:id="@+id/editTextEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        android:layout_marginTop="8dp" />
+
     <Button
         android:id="@+id/btnSaveProfile"
         android:layout_width="match_parent"

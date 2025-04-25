@@ -17,7 +17,7 @@ import java.io.IOException;
 public class EditProfileActivity extends AppCompatActivity {
     private static final int REQUEST_IMAGE_PICK = 101;
     private ImageView imageViewProfileEdit;
-    private EditText editTextName, editTextPhone;
+    private EditText editTextName, editTextPhone, editTextLicenseNumber, editTextPharmacyName, editTextPharmacyAddress, editTextExperience, editTextEmail;
     private Button btnChangePhoto, btnSaveProfile;
     private Uri selectedImageUri;
 
@@ -29,12 +29,22 @@ public class EditProfileActivity extends AppCompatActivity {
         imageViewProfileEdit = findViewById(R.id.imageViewProfileEdit);
         editTextName = findViewById(R.id.editTextName);
         editTextPhone = findViewById(R.id.editTextPhone);
+        editTextLicenseNumber = findViewById(R.id.editTextLicenseNumber);
+        editTextPharmacyName = findViewById(R.id.editTextPharmacyName);
+        editTextPharmacyAddress = findViewById(R.id.editTextPharmacyAddress);
+        editTextExperience = findViewById(R.id.editTextExperience);
+        editTextEmail = findViewById(R.id.editTextEmail);
         btnChangePhoto = findViewById(R.id.btnChangePhoto);
         btnSaveProfile = findViewById(R.id.btnSaveProfile);
 
         // Load existing profile data if available
         editTextName.setText(ProfileManager.getName(this));
         editTextPhone.setText(ProfileManager.getPhone(this));
+        editTextLicenseNumber.setText(ProfileManager.getLicenseNumber(this));
+        editTextPharmacyName.setText(ProfileManager.getPharmacyName(this));
+        editTextPharmacyAddress.setText(ProfileManager.getPharmacyAddress(this));
+        editTextExperience.setText(ProfileManager.getExperience(this));
+        editTextEmail.setText(ProfileManager.getEmail(this));
         Uri profilePicUri = ProfileManager.getProfilePicUri(this);
         if (profilePicUri != null) {
             try {
@@ -47,10 +57,16 @@ public class EditProfileActivity extends AppCompatActivity {
                 ProfileManager.saveProfile(this,
                     ProfileManager.getName(this),
                     ProfileManager.getPhone(this),
-                    null
+                    null,
+                    ProfileManager.getLicenseNumber(this),
+                    ProfileManager.getPharmacyName(this),
+                    ProfileManager.getPharmacyAddress(this),
+                    ProfileManager.getExperience(this),
+                    ProfileManager.getEmail(this)
                 );
             }
         }
+        selectedImageUri = profilePicUri;
 
         btnChangePhoto.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -60,11 +76,16 @@ public class EditProfileActivity extends AppCompatActivity {
         btnSaveProfile.setOnClickListener(v -> {
             String name = editTextName.getText().toString().trim();
             String phone = editTextPhone.getText().toString().trim();
+            String licenseNumber = editTextLicenseNumber.getText().toString().trim();
+            String pharmacyName = editTextPharmacyName.getText().toString().trim();
+            String pharmacyAddress = editTextPharmacyAddress.getText().toString().trim();
+            String experience = editTextExperience.getText().toString().trim();
+            String email = editTextEmail.getText().toString().trim();
             if (name.isEmpty() || phone.isEmpty()) {
                 Toast.makeText(this, "Name and phone cannot be empty", Toast.LENGTH_SHORT).show();
                 return;
             }
-            ProfileManager.saveProfile(this, name, phone, selectedImageUri);
+            ProfileManager.saveProfile(this, name, phone, selectedImageUri, licenseNumber, pharmacyName, pharmacyAddress, experience, email);
             Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
             setResult(Activity.RESULT_OK);
             finish();
