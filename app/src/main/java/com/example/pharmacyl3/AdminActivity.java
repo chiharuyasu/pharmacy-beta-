@@ -22,6 +22,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import android.widget.ImageView;
 import android.widget.Button;
+import android.widget.TextView;
 import java.util.ArrayList;
 import com.example.pharmacyl3.R;
 import android.app.AlertDialog;
@@ -58,6 +59,9 @@ public class AdminActivity extends AppCompatActivity {
 
         // Setup FAB for adding new products
         fabAddProduct.setOnClickListener(v -> showAddProductDialog());
+
+        // Update header on launch
+        updateProfileHeader();
     }
 
     private void initializeViews() {
@@ -83,6 +87,9 @@ public class AdminActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.nav_home) {
                 // Handle Home
+            } else if (id == R.id.nav_edit_profile) {
+                Intent intent = new Intent(AdminActivity.this, EditProfileActivity.class);
+                startActivityForResult(intent, 2001);
             } else if (id == R.id.nav_products) {
                 // Handle Products
             } else if (id == R.id.nav_dashboard) {
@@ -331,11 +338,38 @@ public class AdminActivity extends AppCompatActivity {
                 editDialogImageView.setImageURI(selectedImageUri);
             }
         }
+        if (requestCode == 2001 && resultCode == Activity.RESULT_OK) {
+            updateProfileHeader();
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         refreshData();
+        updateProfileHeader();
+    }
+
+    private void updateProfileHeader() {
+        // Get header view from NavigationView
+        View headerView = navView.getHeaderView(0);
+        ImageView imageViewProfile = headerView.findViewById(R.id.imageViewProfile);
+        TextView textViewName = headerView.findViewById(R.id.textViewName);
+        TextView textViewEmail = headerView.findViewById(R.id.textViewEmail);
+
+        String name = ProfileManager.getName(this);
+        String phone = ProfileManager.getPhone(this);
+        Uri profilePicUri = ProfileManager.getProfilePicUri(this);
+        if (!name.isEmpty()) textViewName.setText(name);
+        if (!phone.isEmpty()) textViewEmail.setText(phone);
+        if (profilePicUri != null) {
+            try {
+                imageViewProfile.setImageURI(profilePicUri);
+            } catch (Exception e) {
+                imageViewProfile.setImageResource(R.drawable.ic_person);
+            }
+        } else {
+            imageViewProfile.setImageResource(R.drawable.ic_person);
+        }
     }
 }
