@@ -106,9 +106,8 @@ public class AdminActivity extends AppCompatActivity {
                 Intent intent = new Intent(AdminActivity.this, AdminDashboardActivity.class);
                 startActivity(intent);
             } else if (id == R.id.nav_barcode_scanner) {
-                // TODO: Launch Barcode Scanner Activity
-                // Example: Intent intent = new Intent(AdminActivity.this, BarcodeScannerActivity.class);
-                // startActivity(intent);
+                Intent intent = new Intent(AdminActivity.this, BarcodeScannerActivity.class);
+                startActivity(intent);
             } else if (id == R.id.nav_logout) {
                 // Handle Logout
                 finish();
