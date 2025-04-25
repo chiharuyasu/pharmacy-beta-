@@ -19,6 +19,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="56dp">
+        <!-- Camera preview view -->
+        <com.example.pharmacyl3.CameraSourcePreview
+            android:id="@+id/camera_preview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
         <!-- Green overlay for barcode area -->
         <ImageView
             android:id="@+id/barcode_overlay"

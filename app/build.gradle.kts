@@ -43,4 +43,5 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation(libs.retrofit)
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 }
