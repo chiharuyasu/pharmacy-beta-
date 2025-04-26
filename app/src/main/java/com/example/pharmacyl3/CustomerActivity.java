@@ -27,6 +27,14 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import android.view.MenuItem;
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 
 public class CustomerActivity extends AppCompatActivity {
 
@@ -135,7 +143,20 @@ public class CustomerActivity extends AppCompatActivity {
             tvProfileName.setText(customer.name);
             tvProfilePhone.setText(customer.phone);
             if (customer.profilePhotoUri != null && !customer.profilePhotoUri.isEmpty()) {
-                imgProfilePhoto.setImageURI(Uri.parse(customer.profilePhotoUri));
+                try {
+                    // Use file path for image (admin header logic)
+                    String path = Uri.parse(customer.profilePhotoUri).getPath();
+                    Bitmap bitmap = BitmapFactory.decodeFile(path);
+                    if (bitmap != null) {
+                        // Make the bitmap circular like in admin header
+                        Bitmap circularBitmap = getCircularBitmap(bitmap);
+                        imgProfilePhoto.setImageBitmap(circularBitmap);
+                    } else {
+                        imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
+                    }
+                } catch (Exception e) {
+                    imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
+                }
             } else {
                 imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
             }
@@ -336,6 +357,52 @@ public class CustomerActivity extends AppCompatActivity {
             drawer.closeDrawer(android.view.Gravity.START);
         } else {
             super.onBackPressed();
+        }
+    }
+
+    private Bitmap getCircularBitmap(Bitmap bitmap) {
+        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, size, size);
+        final RectF rectF = new RectF(rect);
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        canvas.drawOval(rectF, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, null, rect, paint);
+        return output;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh header info after possible profile edit
+        Customer customer = dbHelper.getCustomerById(customerId);
+        if (customer != null) {
+            View headerView = navView.getHeaderView(0);
+            TextView tvProfileName = headerView.findViewById(R.id.tvProfileName);
+            TextView tvProfilePhone = headerView.findViewById(R.id.tvProfilePhone);
+            ImageView imgProfilePhoto = headerView.findViewById(R.id.imgProfilePhoto);
+            tvProfileName.setText(customer.name);
+            tvProfilePhone.setText(customer.phone);
+            if (customer.profilePhotoUri != null && !customer.profilePhotoUri.isEmpty()) {
+                try {
+                    String path = Uri.parse(customer.profilePhotoUri).getPath();
+                    Bitmap bitmap = BitmapFactory.decodeFile(path);
+                    if (bitmap != null) {
+                        Bitmap circularBitmap = getCircularBitmap(bitmap);
+                        imgProfilePhoto.setImageBitmap(circularBitmap);
+                    } else {
+                        imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
+                    }
+                } catch (Exception e) {
+                    imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
+                }
+            } else {
+                imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
+            }
         }
     }
 }

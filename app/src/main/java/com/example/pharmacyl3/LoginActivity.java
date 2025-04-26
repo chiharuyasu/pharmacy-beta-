@@ -15,6 +15,7 @@ import com.example.pharmacyl3.AdminActivity;
 import com.example.pharmacyl3.CustomerActivity;
 import com.example.pharmacyl3.CustomerSignUpActivity;
 import com.example.pharmacyl3.DBHelper;
+import com.example.pharmacyl3.Customer;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -85,7 +86,16 @@ public class LoginActivity extends AppCompatActivity {
                                     .putBoolean("REMEMBER_ME", false)
                                     .apply();
                         }
-                        startActivity(new Intent(LoginActivity.this, CustomerActivity.class));
+                        // Fetch customer and pass ID to CustomerActivity
+                        Customer customer = dbHelper.getCustomerByEmail(username);
+                        if (customer != null) {
+                            Intent intent = new Intent(LoginActivity.this, CustomerActivity.class);
+                            intent.putExtra("customerId", customer.id);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Toast.makeText(LoginActivity.this, "User not found.", Toast.LENGTH_SHORT).show();
+                        }
                     } else {
                         Toast.makeText(LoginActivity.this, "Invalid email or password", Toast.LENGTH_SHORT).show();
                     }
