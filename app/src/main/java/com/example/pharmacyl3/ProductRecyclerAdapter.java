@@ -9,6 +9,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import java.util.ArrayList;
 
 public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecyclerAdapter.ViewHolder> {
@@ -58,6 +60,20 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
         holder.tvProductName.setText(product.getName());
         holder.tvProductPrice.setText(String.format("$%.2f", product.getPrice()));
         holder.tvProductDescription.setText(product.getDescription());
+        
+        ChipGroup chipGroup = holder.itemView.findViewById(R.id.chipGroupProductCategories);
+        chipGroup.removeAllViews();
+        if (product.getCategory() != null && !product.getCategory().isEmpty()) {
+            String[] categories = product.getCategory().split(",");
+            for (String cat : categories) {
+                Chip chip = new Chip(holder.itemView.getContext());
+                chip.setText(cat.trim());
+                chip.setCheckable(false);
+                chip.setClickable(false);
+                chipGroup.addView(chip);
+            }
+        }
+
         if (product.getImageUri() != null && !product.getImageUri().isEmpty()) {
             try {
                 // If it's a file path, use file:// URI
@@ -84,6 +100,11 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
     @Override
     public int getItemCount() {
         return products.size();
+    }
+
+    public void updateProducts(ArrayList<Product> newProducts) {
+        this.products = newProducts;
+        notifyDataSetChanged();
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

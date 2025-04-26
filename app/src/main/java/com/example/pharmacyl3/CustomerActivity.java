@@ -6,7 +6,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.widget.AutoCompleteTextView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -14,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import android.app.AlertDialog;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
@@ -29,6 +33,9 @@ public class CustomerActivity extends AppCompatActivity {
     private ImageButton cartButton;
     private ArrayList<Product> cartItems;
     private View cartButtonContainer;
+    private TextInputEditText etCategoryFilter;
+    private String[] categories;
+    private ArrayList<String> selectedCategories = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +51,11 @@ public class CustomerActivity extends AppCompatActivity {
 
         // Initialize views
         rvProducts = findViewById(R.id.rvProducts);
-        searchEditText = findViewById(R.id.searchEditText);
+        searchEditText = null; // No search field in layout
         cartItemCount = findViewById(R.id.cartItemCount);
         cartButton = findViewById(R.id.cartButton);
         cartButtonContainer = findViewById(R.id.cartButtonContainer);
+        etCategoryFilter = findViewById(R.id.etCategoryFilter);
 
         // Setup RecyclerView
         rvProducts.setLayoutManager(new LinearLayoutManager(this));
@@ -80,20 +88,6 @@ public class CustomerActivity extends AppCompatActivity {
         
         rvProducts.setAdapter(adapter);
 
-        // Setup search functionality
-        searchEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterProducts(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
-        });
-
         // Setup cart button click
         cartButton.setOnClickListener(v -> {
             if (cartItems.isEmpty()) {
@@ -111,6 +105,15 @@ public class CustomerActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
+
+        categories = getResources().getStringArray(R.array.pharmacy_categories);
+        String[] allCategories = new String[categories.length + 1];
+        allCategories[0] = "All";
+        System.arraycopy(categories, 0, allCategories, 1, categories.length);
+        selectedCategories.clear();
+        selectedCategories.add("All");
+        etCategoryFilter.setText("All");
+        etCategoryFilter.setOnClickListener(v -> showCategoryMultiSelectDialog(allCategories));
     }
 
     private void addToCart(Product product) {
@@ -132,17 +135,80 @@ public class CustomerActivity extends AppCompatActivity {
                 .show();
     }
 
-    private void filterProducts(String query) {
+    private void filterByCategories(ArrayList<String> categories) {
         filteredList.clear();
-        if (query.isEmpty()) {
+        if (categories.contains("All") || categories.isEmpty()) {
             filteredList.addAll(productsList);
         } else {
-            String lowercaseQuery = query.toLowerCase();
-            filteredList.addAll(productsList.stream()
-                    .filter(product -> product.getName().toLowerCase().contains(lowercaseQuery))
-                    .collect(Collectors.toList()));
+            for (Product product : productsList) {
+                boolean matched = false;
+                for (String cat : categories) {
+                    if (product.getCategory() != null && !product.getCategory().isEmpty()) {
+                        String[] prodCats = product.getCategory().split(",");
+                        for (String prodCat : prodCats) {
+                            if (prodCat.trim().equalsIgnoreCase(cat.trim())) {
+                                matched = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (matched) break;
+                }
+                if (matched) {
+                    filteredList.add(product);
+                }
+            }
         }
-        adapter.notifyDataSetChanged();
+        adapter.updateProducts(filteredList);
+    }
+
+    private void showCategoryMultiSelectDialog(String[] allCategories) {
+        boolean[] checked = new boolean[allCategories.length];
+        for (int i = 0; i < allCategories.length; i++) {
+            checked[i] = selectedCategories.contains(allCategories[i]);
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Select Categories")
+                .setMultiChoiceItems(allCategories, checked, (dialog, which, isChecked) -> {
+                    if (isChecked) {
+                        if (allCategories[which].equals("All")) {
+                            // If 'All' is checked, uncheck all others
+                            selectedCategories.clear();
+                            selectedCategories.add("All");
+                            // Uncheck all others in the dialog
+                            ListView list = ((AlertDialog) dialog).getListView();
+                            for (int i = 1; i < allCategories.length; i++) {
+                                list.setItemChecked(i, false);
+                            }
+                        } else {
+                            // If any other category is checked, remove 'All' if present
+                            selectedCategories.remove("All");
+                            if (!selectedCategories.contains(allCategories[which]))
+                                selectedCategories.add(allCategories[which]);
+                            // Uncheck 'All' in the dialog
+                            ListView list = ((AlertDialog) dialog).getListView();
+                            list.setItemChecked(0, false);
+                        }
+                    } else {
+                        selectedCategories.remove(allCategories[which]);
+                    }
+                })
+                .setPositiveButton("OK", (dialog, which) -> {
+                    if (selectedCategories.isEmpty()) {
+                        selectedCategories.add("All");
+                        etCategoryFilter.setText("All");
+                        filterByCategories(selectedCategories);
+                    } else if (selectedCategories.contains("All")) {
+                        etCategoryFilter.setText("All");
+                        filterByCategories(selectedCategories);
+                    } else {
+                        String cats = String.join(", ", selectedCategories);
+                        etCategoryFilter.setText(cats);
+                        filterByCategories(selectedCategories);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void updateCartBadge() {
@@ -152,5 +218,16 @@ public class CustomerActivity extends AppCompatActivity {
         } else {
             cartItemCount.setVisibility(View.GONE);
         }
+    }
+
+    private ArrayList<String> getUniqueCategories(ArrayList<Product> products) {
+        ArrayList<String> categories = new ArrayList<>();
+        for (Product product : products) {
+            String cat = product.getCategory();
+            if (cat != null && !cat.isEmpty() && !categories.contains(cat)) {
+                categories.add(cat);
+            }
+        }
+        return categories;
     }
 }

@@ -12,9 +12,10 @@ public class Product implements Serializable {
     private String manufacturer;
     private String imageUri; // New field for image
     private String barcode;
+    private String category;
 
     // Constructor for new products (without ID)
-    public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri, String barcode) {
+    public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri, String barcode, String category) {
         this.name = name;
         this.description = description;
         this.price = price;
@@ -23,10 +24,11 @@ public class Product implements Serializable {
         this.manufacturer = manufacturer;
         this.imageUri = imageUri;
         this.barcode = barcode;
+        this.category = category;
     }
 
     // Constructor for products retrieved from the database (with ID)
-    public Product(int id, String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri, String barcode) {
+    public Product(int id, String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri, String barcode, String category) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -36,6 +38,7 @@ public class Product implements Serializable {
         this.manufacturer = manufacturer;
         this.imageUri = imageUri;
         this.barcode = barcode;
+        this.category = category;
     }
 
     // Getters and setters
@@ -53,4 +56,6 @@ public class Product implements Serializable {
     public void setImageUri(String imageUri) { this.imageUri = imageUri; }
     public String getBarcode() { return barcode; }
     public void setBarcode(String barcode) { this.barcode = barcode; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 }

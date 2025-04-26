@@ -2,4 +2,21 @@
     <string name="app_name">Pharmacyl3</string>
     <string name="add_product">Add Product</string>
     <string name="barcode_scanner">Barcode Scanner</string>
+    <string-array name="pharmacy_categories">
+        <item>Antibiotics</item>
+        <item>Analgesics</item>
+        <item>Antiseptics</item>
+        <item>Antacids</item>
+        <item>Antihistamines</item>
+        <item>Cough &amp; Cold</item>
+        <item>Vitamins</item>
+        <item>Supplements</item>
+        <item>First Aid</item>
+        <item>Skin Care</item>
+        <item>Eye Care</item>
+        <item>Oral Care</item>
+        <item>Personal Hygiene</item>
+        <item>Medical Devices</item>
+        <item>Other</item>
+    </string-array>
 </resources>

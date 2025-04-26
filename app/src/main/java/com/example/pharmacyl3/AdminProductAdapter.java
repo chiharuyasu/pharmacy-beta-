@@ -9,6 +9,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import java.util.ArrayList;
 import java.io.File;
 
@@ -45,6 +47,19 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
         holder.tvProductDescription.setText(product.getDescription());
         holder.tvProductExpiryDate.setText("Expiry Date: " + product.getExpiryDate());
         holder.tvProductManufacturer.setText("Manufacturer: " + product.getManufacturer());
+        
+        ChipGroup chipGroup = holder.itemView.findViewById(R.id.chipGroupProductCategoriesAdmin);
+        chipGroup.removeAllViews();
+        if (product.getCategory() != null && !product.getCategory().isEmpty()) {
+            String[] categories = product.getCategory().split(",");
+            for (String cat : categories) {
+                Chip chip = new Chip(holder.itemView.getContext());
+                chip.setText(cat.trim());
+                chip.setCheckable(false);
+                chip.setClickable(false);
+                chipGroup.addView(chip);
+            }
+        }
         
         if (product.getImageUri() != null && !product.getImageUri().isEmpty()) {
             try {

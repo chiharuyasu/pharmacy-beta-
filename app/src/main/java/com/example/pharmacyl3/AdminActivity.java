@@ -24,6 +24,8 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
@@ -67,6 +69,7 @@ public class AdminActivity extends AppCompatActivity {
         setupDrawer();
         setupRecyclerView();
         setupSearchFunctionality();
+        setupCategoryFilter();
 
         // Setup FAB for adding new products
         fabAddProduct.setOnClickListener(v -> showAddProductDialog(null));
@@ -158,6 +161,10 @@ public class AdminActivity extends AppCompatActivity {
         });
     }
 
+    private void setupCategoryFilter() {
+        // Remove all content from this method, as we are not using AutoCompleteTextView or ChipGroup for admin filtering yet
+    }
+
     private void filterProducts(String query) {
         ArrayList<Product> filteredList = new ArrayList<>();
         for (Product product : productsList) {
@@ -191,6 +198,8 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
         TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
         TextInputEditText etBarcode = dialogView.findViewById(R.id.etProductBarcode);
+        TextInputEditText etCategory = dialogView.findViewById(R.id.etProductCategory);
+        etCategory.setOnClickListener(v -> showCategoryMultiSelectDialog(etCategory));
         ImageView ivProductImage = dialogView.findViewById(R.id.ivProductImage);
         Button btnSelectImage = dialogView.findViewById(R.id.btnSelectImage);
 
@@ -220,6 +229,7 @@ public class AdminActivity extends AppCompatActivity {
                         String expiryDate = etExpiryDate.getText().toString();
                         String manufacturer = etManufacturer.getText().toString();
                         String barcodeValue = etBarcode.getText().toString();
+                        String category = etCategory.getText().toString();
                         String imageUriStr = null;
                         if (selectedImageUri != null) {
                             imageUriStr = copyImageToInternalStorage(selectedImageUri, "product_" + System.currentTimeMillis() + ".jpg");
@@ -229,7 +239,7 @@ public class AdminActivity extends AppCompatActivity {
                             showSnackbar("A product with this barcode already exists!");
                             return;
                         }
-                        Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer, imageUriStr, barcodeValue);
+                        Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer, imageUriStr, barcodeValue, category);
                         dbHelper.insertProduct(newProduct);
                         refreshData();
                         showSnackbar("Product added successfully");
@@ -252,6 +262,8 @@ public class AdminActivity extends AppCompatActivity {
         TextInputEditText etExpiryDate = dialogView.findViewById(R.id.etProductExpiryDate);
         TextInputEditText etManufacturer = dialogView.findViewById(R.id.etProductManufacturer);
         TextInputEditText etBarcode = dialogView.findViewById(R.id.etProductBarcode);
+        TextInputEditText etCategory = dialogView.findViewById(R.id.etProductCategory);
+        etCategory.setOnClickListener(v -> showCategoryMultiSelectDialog(etCategory));
         ImageView ivProductImage = dialogView.findViewById(R.id.ivProductImage);
         Button btnSelectImage = dialogView.findViewById(R.id.btnSelectImage);
 
@@ -263,6 +275,7 @@ public class AdminActivity extends AppCompatActivity {
         etExpiryDate.setText(product.getExpiryDate());
         etManufacturer.setText(product.getManufacturer());
         etBarcode.setText(product.getBarcode());
+        etCategory.setText(product.getCategory());
         if (product.getImageUri() != null && !product.getImageUri().isEmpty()) {
             try {
                 ivProductImage.setImageURI(Uri.parse(product.getImageUri()));
@@ -291,6 +304,7 @@ public class AdminActivity extends AppCompatActivity {
                         String barcodeValue = "";
                         TextInputEditText etBarcode1 = dialogView.findViewById(R.id.etProductBarcode);
                         if (etBarcode1 != null) barcodeValue = etBarcode1.getText().toString();
+                        String category = etCategory.getText().toString();
                         Product updatedProduct = new Product(
                             product.getId(),
                             etName.getText().toString(),
@@ -300,7 +314,8 @@ public class AdminActivity extends AppCompatActivity {
                             etExpiryDate.getText().toString(),
                             etManufacturer.getText().toString(),
                             imageUriStr,
-                            barcodeValue
+                            barcodeValue,
+                            category
                         );
                         dbHelper.updateProduct(updatedProduct);
                         refreshData();
@@ -356,6 +371,39 @@ public class AdminActivity extends AppCompatActivity {
             showSnackbar("Failed to save image");
             return null;
         }
+    }
+
+    private void showCategoryMultiSelectDialog(TextInputEditText etCategory) {
+        String[] categories = getResources().getStringArray(R.array.pharmacy_categories);
+        boolean[] checkedItems = new boolean[categories.length];
+        String current = etCategory.getText().toString();
+        if (!current.isEmpty()) {
+            String[] selected = current.split(",");
+            for (int i = 0; i < categories.length; i++) {
+                for (String sel : selected) {
+                    if (categories[i].trim().equals(sel.trim())) {
+                        checkedItems[i] = true;
+                    }
+                }
+            }
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Select Categories")
+                .setMultiChoiceItems(categories, checkedItems, (dialog, which, isChecked) -> {
+                    checkedItems[which] = isChecked;
+                })
+                .setPositiveButton("OK", (dialog, which) -> {
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < categories.length; i++) {
+                        if (checkedItems[i]) {
+                            if (sb.length() > 0) sb.append(",");
+                            sb.append(categories[i]);
+                        }
+                    }
+                    etCategory.setText(sb.toString());
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override
