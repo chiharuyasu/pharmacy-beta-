@@ -2,6 +2,8 @@
     <string name="app_name">Pharmacyl3</string>
     <string name="add_product">Add Product</string>
     <string name="barcode_scanner">Barcode Scanner</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
     <string-array name="pharmacy_categories">
         <item>Antibiotics</item>
         <item>Analgesics</item>

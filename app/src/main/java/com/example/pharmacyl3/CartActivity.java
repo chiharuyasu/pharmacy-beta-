@@ -1,5 +1,6 @@
 package com.example.pharmacyl3;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -18,6 +19,8 @@ public class CartActivity extends AppCompatActivity {
     private MaterialButton btnCheckout;
     private ArrayList<Product> cartItems;
     private CartAdapter adapter;
+    private int customerId;
+    private DBHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,15 +39,12 @@ public class CartActivity extends AppCompatActivity {
         tvTotalAmount = findViewById(R.id.tvTotalAmount);
         btnCheckout = findViewById(R.id.btnCheckout);
 
-        // Get cart items from intent
-        try {
-            Bundle bundle = getIntent().getExtras();
-            if (bundle != null) {
-                cartItems = (ArrayList<Product>) bundle.getSerializable("cartItems");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        // Get customerId from intent
+        customerId = getIntent().getIntExtra("customerId", -1);
+        dbHelper = new DBHelper(this);
+
+        // Load cart items from DB
+        cartItems = dbHelper.getCartItems(customerId);
 
         if (cartItems == null) {
             cartItems = new ArrayList<>();
@@ -58,6 +58,8 @@ public class CartActivity extends AppCompatActivity {
         adapter = new CartAdapter(cartItems, new CartAdapter.CartItemListener() {
             @Override
             public void onRemoveItem(int position) {
+                Product product = cartItems.get(position);
+                dbHelper.removeCartItem(customerId, product.getId());
                 cartItems.remove(position);
                 adapter.notifyItemRemoved(position);
                 updateTotal();
@@ -74,8 +76,21 @@ public class CartActivity extends AppCompatActivity {
                 Snackbar.make(v, "Your cart is empty", Snackbar.LENGTH_SHORT).show();
                 return;
             }
-            // TODO: Implement checkout process
-            Snackbar.make(v, "Proceeding to checkout...", Snackbar.LENGTH_SHORT).show();
+            // Insert each cart item as an order
+            for (Product product : cartItems) {
+                dbHelper.insertOrder(
+                    customerId,
+                    product.getName(),
+                    product.getQuantity(),
+                    product.getPrice() * product.getQuantity(),
+                    String.valueOf(System.currentTimeMillis())
+                );
+            }
+            dbHelper.clearCart(customerId);
+            cartItems.clear();
+            adapter.notifyDataSetChanged();
+            updateTotal();
+            Snackbar.make(v, "Order placed! Cart cleared.", Snackbar.LENGTH_SHORT).show();
         });
     }
 

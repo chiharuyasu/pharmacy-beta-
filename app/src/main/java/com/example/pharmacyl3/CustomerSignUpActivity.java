@@ -10,7 +10,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 public class CustomerSignUpActivity extends AppCompatActivity {
-    private EditText etName, etEmail, etPassword, etConfirmPassword;
+    private EditText etName, etEmail, etPhone, etPassword, etConfirmPassword;
     private Button btnSignUp;
     private DBHelper dbHelper;
 
@@ -21,6 +21,7 @@ public class CustomerSignUpActivity extends AppCompatActivity {
 
         etName = findViewById(R.id.etName);
         etEmail = findViewById(R.id.etEmail);
+        etPhone = findViewById(R.id.etPhone);
         etPassword = findViewById(R.id.etPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnSignUp = findViewById(R.id.btnSignUp);
@@ -31,10 +32,12 @@ public class CustomerSignUpActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String name = etName.getText().toString().trim();
                 String email = etEmail.getText().toString().trim();
+                String phone = etPhone.getText().toString().trim();
                 String password = etPassword.getText().toString();
                 String confirmPassword = etConfirmPassword.getText().toString();
+                String profilePhotoUri = null; 
 
-                if (TextUtils.isEmpty(name) || TextUtils.isEmpty(email) ||
+                if (TextUtils.isEmpty(name) || TextUtils.isEmpty(email) || TextUtils.isEmpty(phone) ||
                         TextUtils.isEmpty(password) || TextUtils.isEmpty(confirmPassword)) {
                     Toast.makeText(CustomerSignUpActivity.this, "Please fill all fields", Toast.LENGTH_SHORT).show();
                     return;
@@ -47,7 +50,7 @@ public class CustomerSignUpActivity extends AppCompatActivity {
                     Toast.makeText(CustomerSignUpActivity.this, "Email already registered", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                boolean inserted = dbHelper.insertCustomer(name, email, password);
+                boolean inserted = dbHelper.insertCustomer(name, email, password, phone, profilePhotoUri);
                 if (inserted) {
                     Toast.makeText(CustomerSignUpActivity.this, "Sign up successful! Please log in.", Toast.LENGTH_SHORT).show();
                     finish();

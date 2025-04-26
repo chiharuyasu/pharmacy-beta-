@@ -47,6 +47,12 @@
         <activity
             android:name=".CustomerSignUpActivity"
             android:exported="false" />
+        <activity
+            android:name=".OrderHistoryActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CustomerEditProfileActivity"
+            android:exported="false" />
         <!-- Removed MainActivity as it does not exist -->
     </application>
 

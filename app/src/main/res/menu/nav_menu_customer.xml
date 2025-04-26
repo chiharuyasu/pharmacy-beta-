@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_edit_profile"
+        android:title="Edit Profile"
+        android:icon="@drawable/ic_edit_profile"/>
+    <item
+        android:id="@+id/nav_order_history"
+        android:title="Order History"
+        android:icon="@drawable/ic_order_history"/>
+    <item
+        android:id="@+id/nav_logout"
+        android:title="Logout"
+        android:icon="@drawable/ic_logout"/>
+</menu>

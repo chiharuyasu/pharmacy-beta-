@@ -13,6 +13,7 @@ public class Product implements Serializable {
     private String imageUri; // New field for image
     private String barcode;
     private String category;
+    private int quantity = 1; // For cart usage
 
     // Constructor for new products (without ID)
     public Product(String name, String description, double price, int stock, String expiryDate, String manufacturer, String imageUri, String barcode, String category) {
@@ -58,4 +59,6 @@ public class Product implements Serializable {
     public void setBarcode(String barcode) { this.barcode = barcode; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public int getQuantity() { return quantity; }
+    public void setQuantity(int quantity) { this.quantity = quantity; }
 }

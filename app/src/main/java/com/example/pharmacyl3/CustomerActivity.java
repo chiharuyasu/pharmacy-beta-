@@ -9,17 +9,24 @@ import android.view.animation.AnimationUtils;
 import android.widget.AutoCompleteTextView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
 import android.app.AlertDialog;
+import android.net.Uri;
+import android.content.SharedPreferences;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
+import android.view.MenuItem;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 
 public class CustomerActivity extends AppCompatActivity {
 
@@ -36,6 +43,9 @@ public class CustomerActivity extends AppCompatActivity {
     private TextInputEditText etCategoryFilter;
     private String[] categories;
     private ArrayList<String> selectedCategories = new ArrayList<>();
+    private DrawerLayout drawerLayout;
+    private NavigationView navView;
+    private int customerId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,6 +66,13 @@ public class CustomerActivity extends AppCompatActivity {
         cartButton = findViewById(R.id.cartButton);
         cartButtonContainer = findViewById(R.id.cartButtonContainer);
         etCategoryFilter = findViewById(R.id.etCategoryFilter);
+        drawerLayout = findViewById(R.id.drawer_layout_customer);
+        navView = findViewById(R.id.nav_view_customer);
+
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+            this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
 
         // Setup RecyclerView
         rvProducts.setLayoutManager(new LinearLayoutManager(this));
@@ -63,8 +80,12 @@ public class CustomerActivity extends AppCompatActivity {
 
         // Initialize database and load products
         dbHelper = new DBHelper(this);
+        // Get customerId from intent or session (replace with actual logic)
+        customerId = getIntent().getIntExtra("customerId", -1);
         productsList = dbHelper.getAllProducts();
         filteredList = new ArrayList<>(productsList);
+        // Load cart from DB
+        cartItems = dbHelper.getCartItems(customerId);
 
         // Setup adapter
         adapter = new ProductRecyclerAdapter(filteredList, 
@@ -90,20 +111,9 @@ public class CustomerActivity extends AppCompatActivity {
 
         // Setup cart button click
         cartButton.setOnClickListener(v -> {
-            if (cartItems.isEmpty()) {
-                Snackbar.make(v, "Your cart is empty", Snackbar.LENGTH_SHORT).show();
-                return;
-            }
-            try {
-                Intent intent = new Intent(CustomerActivity.this, CartActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("cartItems", cartItems);
-                intent.putExtras(bundle);
-                startActivity(intent);
-            } catch (Exception e) {
-                Snackbar.make(v, "Error opening cart", Snackbar.LENGTH_SHORT).show();
-                e.printStackTrace();
-            }
+            Intent intent = new Intent(CustomerActivity.this, CartActivity.class);
+            intent.putExtra("customerId", customerId);
+            startActivity(intent);
         });
 
         categories = getResources().getStringArray(R.array.pharmacy_categories);
@@ -114,25 +124,92 @@ public class CustomerActivity extends AppCompatActivity {
         selectedCategories.add("All");
         etCategoryFilter.setText("All");
         etCategoryFilter.setOnClickListener(v -> showCategoryMultiSelectDialog(allCategories));
+
+        // --- Load profile info into nav header ---
+        View headerView = navView.getHeaderView(0);
+        ImageView imgProfilePhoto = headerView.findViewById(R.id.imgProfilePhoto);
+        TextView tvProfileName = headerView.findViewById(R.id.tvProfileName);
+        TextView tvProfilePhone = headerView.findViewById(R.id.tvProfilePhone);
+        Customer customer = dbHelper.getCustomerById(customerId);
+        if (customer != null) {
+            tvProfileName.setText(customer.name);
+            tvProfilePhone.setText(customer.phone);
+            if (customer.profilePhotoUri != null && !customer.profilePhotoUri.isEmpty()) {
+                imgProfilePhoto.setImageURI(Uri.parse(customer.profilePhotoUri));
+            } else {
+                imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
+            }
+        }
+
+        navView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem item) {
+                int id = item.getItemId();
+                if (id == R.id.nav_edit_profile) {
+                    Intent intent = new Intent(CustomerActivity.this, CustomerEditProfileActivity.class);
+                    intent.putExtra("customerId", customerId);
+                    startActivity(intent);
+                } else if (id == R.id.nav_order_history) {
+                    Intent intent = new Intent(CustomerActivity.this, OrderHistoryActivity.class);
+                    intent.putExtra("customerId", customerId);
+                    startActivity(intent);
+                } else if (id == R.id.nav_logout) {
+                    // Clear saved login (if Remember Me), return to LoginActivity
+                    getSharedPreferences("loginPrefs", MODE_PRIVATE).edit().clear().apply();
+                    Intent intent = new Intent(CustomerActivity.this, LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    finish();
+                }
+                drawerLayout.closeDrawers();
+                return true;
+            }
+        });
     }
 
     private void addToCart(Product product) {
-        cartItems.add(product);
+        // Check if product already in cart
+        boolean found = false;
+        for (Product p : cartItems) {
+            if (p.getId() == product.getId()) {
+                p.setQuantity(p.getQuantity() + 1);
+                dbHelper.addOrUpdateCartItem(customerId, p.getId(), p.getQuantity());
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            product.setQuantity(1);
+            cartItems.add(product);
+            dbHelper.addOrUpdateCartItem(customerId, product.getId(), 1);
+        }
         updateCartBadge();
-        
-        // Animate cart button
         cartButtonContainer.startAnimation(
             AnimationUtils.loadAnimation(this, R.anim.shake_animation));
-        
-        // Show success message with undo option
         Snackbar.make(findViewById(android.R.id.content), 
                      product.getName() + " added to cart", 
                      Snackbar.LENGTH_LONG)
                 .setAction("UNDO", v -> {
-                    cartItems.remove(cartItems.size() - 1);
-                    updateCartBadge();
+                    removeFromCart(product);
                 })
                 .show();
+    }
+
+    private void removeFromCart(Product product) {
+        for (int i = 0; i < cartItems.size(); i++) {
+            if (cartItems.get(i).getId() == product.getId()) {
+                int newQty = cartItems.get(i).getQuantity() - 1;
+                if (newQty <= 0) {
+                    dbHelper.removeCartItem(customerId, product.getId());
+                    cartItems.remove(i);
+                } else {
+                    cartItems.get(i).setQuantity(newQty);
+                    dbHelper.addOrUpdateCartItem(customerId, product.getId(), newQty);
+                }
+                break;
+            }
+        }
+        updateCartBadge();
     }
 
     private void filterByCategories(ArrayList<String> categories) {
@@ -229,5 +306,36 @@ public class CustomerActivity extends AppCompatActivity {
             }
         }
         return categories;
+    }
+
+    // TODO: Implement real logic to get current customer ID
+    private int getCurrentCustomerId() {
+        // Placeholder: return a fixed ID or fetch from SharedPreferences/Intent
+        return 1;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 101 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri selectedImageUri = data.getData();
+            ImageView imgProfilePhoto = findViewById(R.id.imgProfilePhoto);
+            imgProfilePhoto.setImageURI(selectedImageUri);
+            // Save photo URI to DB
+            SharedPreferences prefs = getSharedPreferences("loginPrefs", MODE_PRIVATE);
+            String email = prefs.getString("REMEMBERED_EMAIL", "");
+            DBHelper dbHelper = new DBHelper(this);
+            dbHelper.updateCustomerProfilePhoto(email, selectedImageUri.toString());
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout_customer);
+        if (drawer.isDrawerOpen(android.view.Gravity.START)) {
+            drawer.closeDrawer(android.view.Gravity.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 }
