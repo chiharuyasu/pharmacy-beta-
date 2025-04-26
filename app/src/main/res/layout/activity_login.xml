@@ -70,6 +70,17 @@
             android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Remember Me Checkbox -->
+    <CheckBox
+        android:id="@+id/cbRememberMe"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Remember Me"
+        android:textColor="#000000"
+        app:layout_constraintTop_toBottomOf="@id/tilPassword"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="12dp"/>
+
     <!-- Login Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogin"
@@ -79,7 +90,7 @@
         app:cornerRadius="16dp"
         android:backgroundTint="#24C82E"
         android:textColor="@android:color/white"
-        app:layout_constraintTop_toBottomOf="@id/tilPassword"
+        app:layout_constraintTop_toBottomOf="@id/cbRememberMe"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="24dp" />

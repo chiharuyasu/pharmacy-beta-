@@ -44,6 +44,9 @@
         <activity
             android:name=".BarcodeScannerActivity"
             android:exported="false" />
+        <activity
+            android:name=".CustomerSignUpActivity"
+            android:exported="false" />
         <!-- Removed MainActivity as it does not exist -->
     </application>
 
