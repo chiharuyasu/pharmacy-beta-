@@ -76,7 +76,18 @@ public class CartActivity extends AppCompatActivity {
                 Snackbar.make(v, "Your cart is empty", Snackbar.LENGTH_SHORT).show();
                 return;
             }
+            // Check stock availability before placing order
+            for (Product product : cartItems) {
+                if (product.getQuantity() > product.getStock()) {
+                    Snackbar.make(rvCartItems,
+                        "Only " + product.getStock() + " items available for " + product.getName(),
+                        Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+            }
             // Insert each cart item as an order
+            int totalQuantity = 0;
+            ArrayList<String> productNames = new ArrayList<>();
             for (Product product : cartItems) {
                 dbHelper.insertOrder(
                     customerId,
@@ -85,7 +96,28 @@ public class CartActivity extends AppCompatActivity {
                     product.getPrice() * product.getQuantity(),
                     String.valueOf(System.currentTimeMillis())
                 );
+                // Decrease product stock in DB
+                int newStock = product.getStock() - product.getQuantity();
+                if (newStock < 0) newStock = 0;
+                product.setStock(newStock);
+                dbHelper.updateProduct(product);
+                totalQuantity += product.getQuantity();
+                productNames.add(product.getName());
             }
+            // Fetch customer name for notification
+            Customer customer = dbHelper.getCustomerById(customerId);
+            String customerName = customer != null ? customer.name : "Unknown Customer";
+            // Format date
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault());
+            String dateStr = sdf.format(new java.util.Date());
+            // Notify admin about the order
+            NotificationUtils.notifyOrderPlaced(
+                CartActivity.this,
+                customerName,
+                productNames,
+                totalQuantity,
+                dateStr
+            );
             dbHelper.clearCart(customerId);
             cartItems.clear();
             adapter.notifyDataSetChanged();

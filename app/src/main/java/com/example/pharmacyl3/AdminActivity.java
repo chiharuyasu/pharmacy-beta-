@@ -23,6 +23,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.chip.Chip;
@@ -58,28 +60,36 @@ public class AdminActivity extends AppCompatActivity {
     private AlertDialog editProductDialog;
     private ImageView editDialogImageView;
     private String pendingBarcode = null;
+    private AdminProductViewModel productViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
 
-        // Check for low stock and expiring soon/expired products and insert notifications
         NotificationUtils.checkAndNotify(this);
-
-        // Initialize views
         initializeViews();
         setupToolbar();
         setupDrawer();
         setupRecyclerView();
         setupSearchFunctionality();
         setupCategoryFilter();
-
-        // Setup FAB for adding new products
         fabAddProduct.setOnClickListener(v -> showAddProductDialog(null));
-
-        // Update header on launch
         updateProfileHeader();
+
+        // --- LiveData & ViewModel integration ---
+        productViewModel = new ViewModelProvider(this).get(AdminProductViewModel.class);
+        productViewModel.getProductsLiveData().observe(this, new Observer<ArrayList<Product>>() {
+            @Override
+            public void onChanged(ArrayList<Product> products) {
+                productsList = products;
+                if (adapter != null) {
+                    adapter.updateProducts(products);
+                }
+            }
+        });
+        // Initial load
+        refreshData();
     }
 
     private void initializeViews() {
@@ -363,9 +373,11 @@ public class AdminActivity extends AppCompatActivity {
     }
 
     private void refreshData() {
-        productsList.clear();
-        productsList.addAll(dbHelper.getAllProducts());
-        adapter.notifyDataSetChanged();
+        if (dbHelper == null) dbHelper = new DBHelper(this);
+        ArrayList<Product> latestProducts = dbHelper.getAllProducts();
+        if (productViewModel != null) {
+            productViewModel.setProducts(latestProducts);
+        }
     }
 
     private void showSnackbar(String message) {
@@ -448,13 +460,6 @@ public class AdminActivity extends AppCompatActivity {
         if (requestCode == 2001 && resultCode == Activity.RESULT_OK) {
             updateProfileHeader();
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        refreshData();
-        updateProfileHeader();
     }
 
     private void updateProfileHeader() {

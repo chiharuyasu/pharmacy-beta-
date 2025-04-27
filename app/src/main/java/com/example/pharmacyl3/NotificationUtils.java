@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class NotificationUtils {
@@ -59,5 +60,17 @@ public class NotificationUtils {
                 }
             } catch (Exception ignored) {}
         }
+    }
+
+    // Notify admin when a customer places an order
+    public static void notifyOrderPlaced(Context context, String customerName, List<String> productNames, int totalQuantity, String date) {
+        String msg = customerName + " bought " + totalQuantity + " products: " + android.text.TextUtils.join(", ", productNames) + " on " + date;
+        Notification notification = new Notification(
+                "ORDER_PLACED",
+                msg,
+                date,
+                false
+        );
+        new DBHelper(context).insertNotification(notification);
     }
 }
