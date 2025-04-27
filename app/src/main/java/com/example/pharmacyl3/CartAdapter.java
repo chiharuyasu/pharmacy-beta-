@@ -35,8 +35,8 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Product product = cartItems.get(position);
         holder.tvProductName.setText(product.getName());
-        holder.tvProductPrice.setText(String.format("$%.2f", product.getPrice()));
-        
+        // Show price x quantity
+        holder.tvProductPrice.setText(String.format("$%.2f x %d = $%.2f", product.getPrice(), product.getQuantity(), product.getPrice() * product.getQuantity()));
         holder.btnRemove.setOnClickListener(v -> {
             listener.onRemoveItem(holder.getAdapterPosition());
         });

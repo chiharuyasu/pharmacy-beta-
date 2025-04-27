@@ -105,6 +105,17 @@ pharmacy-beta-
 - **Manifest Registration**: Registered the new `AdminEditProfileActivity` in `AndroidManifest.xml` to prevent crashes when launching the admin profile editor.
 - **Bug Fixes**: Addressed issues where admin profile changes (especially the photo) would not appear or would cause crashes.
 
+### Inventory & Notification System (2025)
+- **Low Stock Notification:** Admins are alerted via a Snackbar and persistent notification when a product's stock falls below a threshold.
+- **Expiring Soon Notification:** Admins receive a Snackbar and notification when products are nearing expiry (default: within 30 days).
+- **Expired Product Notification:** Admins are notified via Snackbar and notification if any product has expired.
+- **Order Placed Notification:** When a customer places an order, admins receive a Snackbar alert (if active) and a persistent notification.
+- **Notifications Center:** Admins can view all alerts (low stock, expiring, expired, order placed) in a dedicated notifications activity.
+- **Snackbar 'VIEW' Action:** All Snackbars have a 'VIEW' button that opens the notifications screen for quick management.
+- **Database Notifications Table:** Added a notifications table to SQLite for tracking all admin alerts.
+- **Cart Quantity Picker:** Customers can select quantity when adding to cart; cart badge reflects total quantity.
+- **Bug Fixes:** Improved reliability of notification triggers, cart badge, and order processing.
+
 ---
 
 ## Getting Started

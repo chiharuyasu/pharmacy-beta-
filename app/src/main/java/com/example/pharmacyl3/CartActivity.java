@@ -129,7 +129,7 @@ public class CartActivity extends AppCompatActivity {
     private void updateTotal() {
         double total = 0;
         for (Product product : cartItems) {
-            total += product.getPrice();
+            total += product.getPrice() * product.getQuantity();
         }
         tvTotalAmount.setText(String.format("$%.2f", total));
     }

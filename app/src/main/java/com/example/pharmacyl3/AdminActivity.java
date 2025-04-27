@@ -86,6 +86,8 @@ public class AdminActivity extends AppCompatActivity {
                 if (adapter != null) {
                     adapter.updateProducts(products);
                 }
+                // Show low stock snackbar if any
+                showLowStockSnackbarIfNeeded(products);
             }
         });
         // Initial load
@@ -425,6 +427,88 @@ public class AdminActivity extends AppCompatActivity {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
+    }
+
+    private void showLowStockSnackbarIfNeeded(ArrayList<Product> products) {
+        ArrayList<Product> lowStockProducts = new ArrayList<>();
+        ArrayList<Product> expiringProducts = new ArrayList<>();
+        ArrayList<Product> expiredProducts = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        long expiryThresholdMillis = NotificationUtils.EXPIRY_DAYS_THRESHOLD * 24L * 60L * 60L * 1000L;
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault());
+        for (Product p : products) {
+            if (p.getStock() <= NotificationUtils.LOW_STOCK_THRESHOLD) {
+                lowStockProducts.add(p);
+            }
+            // Expiring soon and expired logic
+            try {
+                if (p.getExpiryDate() != null && !p.getExpiryDate().isEmpty()) {
+                    java.util.Date expiry = sdf.parse(p.getExpiryDate());
+                    if (expiry != null) {
+                        if (expiry.getTime() - now <= expiryThresholdMillis && expiry.getTime() > now) {
+                            expiringProducts.add(p);
+                        } else if (expiry.getTime() <= now) {
+                            expiredProducts.add(p);
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        // Show low stock Snackbar
+        if (!lowStockProducts.isEmpty()) {
+            String msg;
+            if (lowStockProducts.size() == 1) {
+                msg = "Low stock: " + lowStockProducts.get(0).getName();
+            } else {
+                msg = "You have " + lowStockProducts.size() + " products with low stock.";
+            }
+            Snackbar.make(rvProducts, msg, Snackbar.LENGTH_LONG)
+                .setAction("VIEW", v -> {
+                    Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
+                    startActivity(intent);
+                })
+                .show();
+        }
+        // Show expiring soon Snackbar
+        if (!expiringProducts.isEmpty()) {
+            String msg;
+            if (expiringProducts.size() == 1) {
+                msg = "Expiring soon: " + expiringProducts.get(0).getName();
+            } else {
+                msg = "You have " + expiringProducts.size() + " products expiring soon.";
+            }
+            Snackbar.make(rvProducts, msg, Snackbar.LENGTH_LONG)
+                .setAction("VIEW", v -> {
+                    Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
+                    startActivity(intent);
+                })
+                .show();
+        }
+        // Show expired Snackbar
+        if (!expiredProducts.isEmpty()) {
+            String msg;
+            if (expiredProducts.size() == 1) {
+                msg = "Expired: " + expiredProducts.get(0).getName();
+            } else {
+                msg = "You have " + expiredProducts.size() + " expired products.";
+            }
+            Snackbar.make(rvProducts, msg, Snackbar.LENGTH_LONG)
+                .setAction("VIEW", v -> {
+                    Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
+                    startActivity(intent);
+                })
+                .show();
+        }
+    }
+
+    public void showOrderPlacedSnackbar(String customerName, int totalQuantity) {
+        String msg = "Order placed: " + customerName + " bought " + totalQuantity + " items.";
+        Snackbar.make(rvProducts, msg, Snackbar.LENGTH_LONG)
+            .setAction("VIEW", v -> {
+                Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
+                startActivity(intent);
+            })
+            .show();
     }
 
     @Override

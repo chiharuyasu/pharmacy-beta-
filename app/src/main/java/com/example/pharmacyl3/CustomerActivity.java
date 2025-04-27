@@ -193,16 +193,15 @@ public class CustomerActivity extends AppCompatActivity {
         boolean found = false;
         for (Product p : cartItems) {
             if (p.getId() == product.getId()) {
-                p.setQuantity(p.getQuantity() + 1);
+                p.setQuantity(p.getQuantity() + product.getQuantity());
                 dbHelper.addOrUpdateCartItem(customerId, p.getId(), p.getQuantity());
                 found = true;
                 break;
             }
         }
         if (!found) {
-            product.setQuantity(1);
             cartItems.add(product);
-            dbHelper.addOrUpdateCartItem(customerId, product.getId(), 1);
+            dbHelper.addOrUpdateCartItem(customerId, product.getId(), product.getQuantity());
         }
         updateCartBadge();
         cartButtonContainer.startAnimation(
@@ -310,9 +309,13 @@ public class CustomerActivity extends AppCompatActivity {
     }
 
     private void updateCartBadge() {
-        if (cartItems.size() > 0) {
+        int count = 0;
+        for (Product p : cartItems) {
+            count += p.getQuantity();
+        }
+        if (count > 0) {
             cartItemCount.setVisibility(View.VISIBLE);
-            cartItemCount.setText(String.valueOf(cartItems.size()));
+            cartItemCount.setText(String.valueOf(count));
         } else {
             cartItemCount.setVisibility(View.GONE);
         }

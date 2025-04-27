@@ -72,5 +72,9 @@ public class NotificationUtils {
                 false
         );
         new DBHelper(context).insertNotification(notification);
+        // Show order placed snackbar if admin is active
+        if (context instanceof com.example.pharmacyl3.AdminActivity) {
+            ((com.example.pharmacyl3.AdminActivity) context).showOrderPlacedSnackbar(customerName, totalQuantity);
+        }
     }
 }

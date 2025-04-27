@@ -4,9 +4,11 @@ import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
@@ -90,11 +92,41 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
         if (isCustomerView) {
             holder.btnAddToCart.setVisibility(View.VISIBLE);
             holder.itemView.setOnClickListener(v -> productInteractionListener.onItemClick(product));
-            holder.btnAddToCart.setOnClickListener(v -> productInteractionListener.onAddToCart(product));
+            holder.btnAddToCart.setOnClickListener(v -> {
+                // Show quantity picker dialog
+                showQuantityPickerDialog(holder, product);
+            });
         } else {
             holder.btnAddToCart.setVisibility(View.GONE);
             holder.itemView.setOnClickListener(v -> itemClickListener.onItemClick(product));
         }
+    }
+
+    private void showQuantityPickerDialog(ViewHolder holder, Product product) {
+        View dialogView = LayoutInflater.from(holder.itemView.getContext())
+                .inflate(R.layout.dialog_quantity_picker, null);
+        TextView tvProductName = dialogView.findViewById(R.id.tvDialogProductName);
+        TextView tvProductStock = dialogView.findViewById(R.id.tvDialogProductStock);
+        EditText etQuantity = dialogView.findViewById(R.id.etQuantity);
+        tvProductName.setText(product.getName());
+        tvProductStock.setText("Stock: " + product.getStock());
+        etQuantity.setText("1");
+        new AlertDialog.Builder(holder.itemView.getContext())
+                .setTitle("Select Quantity")
+                .setView(dialogView)
+                .setPositiveButton("Add to Cart", (dialog, which) -> {
+                    int qty = 1;
+                    try {
+                        qty = Integer.parseInt(etQuantity.getText().toString());
+                    } catch (Exception ignored) {}
+                    if (qty < 1) qty = 1;
+                    if (qty > product.getStock()) qty = product.getStock();
+                    Product productCopy = new Product(product.getId(), product.getName(), product.getDescription(), product.getPrice(), product.getStock(), product.getExpiryDate(), product.getManufacturer(), product.getImageUri(), product.getBarcode(), product.getCategory());
+                    productCopy.setQuantity(qty);
+                    productInteractionListener.onAddToCart(productCopy);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     @Override
