@@ -52,6 +52,9 @@ pharmacy-beta-
 - **Profile Management:**
   - Dedicated profile editing screen for customers (`CustomerEditProfileActivity`).
   - Fields: Name, Email, Phone, Profile Photo (editable after signup).
+  - **Profile photo selection:** Customers can pick a photo from their device; the app copies it to internal storage for reliable display.
+  - **Circular profile photo:** Profile photos are displayed as circles in both the drawer header and the edit profile screen.
+  - **Live header update:** After editing and saving the profile, the drawer header updates immediately with the new name, phone, and photo.
   - Profile data is loaded and saved securely in SQLite.
 - **Product Browsing:** View available products, search, and filter.
 - **Cart & Orders:** Add items to cart, place orders, and view order history.
@@ -60,6 +63,7 @@ pharmacy-beta-
 - **Admin Dashboard:** Manage products, view orders, scan barcodes, and update inventory.
 - **Product Management:** Add, edit, and delete products with rich metadata.
 - **Order Management:** View and manage all customer orders.
+- **Admin profile photo:** Admins can also set and update a circular profile photo in the header.
 
 ---
 
@@ -67,26 +71,51 @@ pharmacy-beta-
 - **SQLite** is used for all persistent data.
 - **DBHelper.java:** Centralized helper for all database operations (customers, products, orders, cart, etc).
 - **Customers Table:** Stores both customer and pharmacist data (with relevant fields for each).
+- **Profile photo URIs:** Profile photos are saved as file URIs in the database for persistence and reliability.
 
 ---
 
-## Design Decisions
+## Design Decisions & Improvements
 - **Separation of Concerns:**
   - Separate activities for customer and pharmacist/admin flows.
   - Dedicated customer profile editing screen (no pharmacist fields for customers).
 - **User Experience:**
   - Profile editing pre-fills all available data.
-  - Profile photo can be updated from the edit profile screen.
+  - Profile photo can be updated from the edit profile screen and is displayed as a circle.
+  - Drawer header updates instantly after profile changes.
 - **Security:**
   - Passwords stored securely in SQLite (consider hashing in production).
-  - Sensitive data handled with care.
+  - Profile photos are copied to internal storage to avoid issues with temporary URIs and permissions.
+- **Error Handling:**
+  - Graceful fallback to placeholder image if photo cannot be loaded.
+
+---
+
+## Recent Feature Additions & Fixes
+- Persistent, circular profile photos for both customers and admins.
+- Live drawer header update after editing profile (name, phone, photo).
+- Improved image selection and storage logic for reliability.
+- Consistent UI for profile photo display in edit and header screens.
+- Bug fixes for profile photo not showing or causing crashes after editing.
 
 ---
 
 ## Getting Started
+
 1. Open the project in Android Studio.
-2. Build and run on an emulator or device.
-3. Sign up as a customer or log in as an admin.
+2. Build and run on an emulator or device (no special configuration needed).
+3. Use the app as a customer or admin to explore all features.
+
+---
+
+## Credits
+- Developed by Chiharuyasu
+- For support or feedback, open an issue or contact the author.
+
+---
+
+## License
+This project is for educational/demo purposes. Add your license as needed.
 
 ---
 
@@ -104,8 +133,3 @@ pharmacy-beta-
 - Implement password hashing for extra security.
 - Add remote/cloud sync support.
 - Enhance UI/UX for smoother navigation.
-
----
-
-## License
-This project is for educational/demo purposes. Add your license as needed.
