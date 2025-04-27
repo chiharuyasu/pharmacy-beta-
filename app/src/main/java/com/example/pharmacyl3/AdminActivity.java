@@ -13,6 +13,7 @@ import android.graphics.RectF;
 import android.graphics.Xfermode;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -102,7 +103,7 @@ public class AdminActivity extends AppCompatActivity {
             if (id == R.id.nav_home) {
                 // Handle Home
             } else if (id == R.id.nav_edit_profile) {
-                Intent intent = new Intent(AdminActivity.this, EditProfileActivity.class);
+                Intent intent = new Intent(AdminActivity.this, AdminEditProfileActivity.class);
                 startActivityForResult(intent, 2001);
             } else if (id == R.id.nav_products) {
                 // Handle Products
@@ -462,8 +463,12 @@ public class AdminActivity extends AppCompatActivity {
         if (!phone.isEmpty()) textViewEmail.setText(phone);
         if (profilePicUri != null) {
             try {
-                // Use file path for image
-                Bitmap bitmap = BitmapFactory.decodeFile(profilePicUri.getPath());
+                Bitmap bitmap;
+                if (profilePicUri.getScheme() != null && profilePicUri.getScheme().startsWith("content")) {
+                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), profilePicUri);
+                } else {
+                    bitmap = BitmapFactory.decodeFile(profilePicUri.getPath());
+                }
                 if (bitmap != null) {
                     Bitmap circularBitmap = getCircularBitmap(bitmap);
                     imageViewProfile.setImageBitmap(circularBitmap);
