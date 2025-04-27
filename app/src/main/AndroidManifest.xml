@@ -56,6 +56,9 @@
         <activity
             android:name=".AdminEditProfileActivity"
             android:exported="false" />
+        <activity
+            android:name=".AdminNotificationsActivity"
+            android:exported="false" />
         <!-- Removed MainActivity as it does not exist -->
     </application>
 

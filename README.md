@@ -97,6 +97,13 @@ pharmacy-beta-
 - Improved image selection and storage logic for reliability.
 - Consistent UI for profile photo display in edit and header screens.
 - Bug fixes for profile photo not showing or causing crashes after editing.
+- **Dedicated Admin Profile Editing**: Added a new `AdminEditProfileActivity` for admins/pharmacists with fields for name, phone, license number, pharmacy name, address, years of experience, email, and profile photo. Admin profile data is stored in `SharedPreferences` via `ProfileManager`.
+- **Admin Profile Photo in Header**: Admins can set/update their profile photo. The navigation drawer header now reliably displays the updated photo (supports both content and file URIs).
+- **Separation of Profile Logic**: Customer and admin profile editing are now handled by separate activities for clarity and maintainability. Customer profile logic remains in the database, while admin profile logic uses `ProfileManager`.
+- **Live Header Update for Admin**: After editing the admin profile, the header updates immediately with the new name and photo.
+- **Improved Image Handling**: Fixed image loading logic to handle both `content://` and `file://` URIs, preventing crashes and ensuring compatibility with different image sources.
+- **Manifest Registration**: Registered the new `AdminEditProfileActivity` in `AndroidManifest.xml` to prevent crashes when launching the admin profile editor.
+- **Bug Fixes**: Addressed issues where admin profile changes (especially the photo) would not appear or would cause crashes.
 
 ---
 

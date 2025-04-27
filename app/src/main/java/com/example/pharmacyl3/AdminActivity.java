@@ -64,6 +64,9 @@ public class AdminActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
 
+        // Check for low stock and expiring soon/expired products and insert notifications
+        NotificationUtils.checkAndNotify(this);
+
         // Initialize views
         initializeViews();
         setupToolbar();
@@ -113,6 +116,9 @@ public class AdminActivity extends AppCompatActivity {
                 startActivity(intent);
             } else if (id == R.id.nav_barcode_scanner) {
                 launchBarcodeScanner();
+            } else if (id == R.id.nav_notifications) {
+                Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
+                startActivity(intent);
             } else if (id == R.id.nav_logout) {
                 // Handle Logout
                 finish();
@@ -242,6 +248,7 @@ public class AdminActivity extends AppCompatActivity {
                         }
                         Product newProduct = new Product(name, description, price, stock, expiryDate, manufacturer, imageUriStr, barcodeValue, category);
                         dbHelper.insertProduct(newProduct);
+                        NotificationUtils.checkAndNotify(this);
                         refreshData();
                         showSnackbar("Product added successfully");
                     } catch (Exception e) {
@@ -319,6 +326,7 @@ public class AdminActivity extends AppCompatActivity {
                             category
                         );
                         dbHelper.updateProduct(updatedProduct);
+                        NotificationUtils.checkAndNotify(this);
                         refreshData();
                         showSnackbar("Product updated successfully");
                     } catch (Exception e) {

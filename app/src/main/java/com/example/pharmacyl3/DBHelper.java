@@ -9,6 +9,7 @@ import android.database.Cursor;
 import com.example.pharmacyl3.Product;
 import com.example.pharmacyl3.Order;
 import com.example.pharmacyl3.Customer;
+import com.example.pharmacyl3.Notification;
 
 import java.util.ArrayList;
 
@@ -57,6 +58,14 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final String COLUMN_CART_QUANTITY = "quantity";
     public static final String COLUMN_CART_ADDED_AT = "addedAt";
 
+    // --- NOTIFICATIONS TABLE ---
+    public static final String TABLE_NOTIFICATIONS = "Notifications";
+    public static final String COLUMN_NOTIFICATION_ID = "id";
+    public static final String COLUMN_NOTIFICATION_TYPE = "type";
+    public static final String COLUMN_NOTIFICATION_MESSAGE = "message";
+    public static final String COLUMN_NOTIFICATION_TIMESTAMP = "timestamp";
+    public static final String COLUMN_NOTIFICATION_IS_READ = "isRead";
+
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -100,6 +109,13 @@ public class DBHelper extends SQLiteOpenHelper {
                 + "FOREIGN KEY(" + COLUMN_CART_PRODUCT_ID + ") REFERENCES Products(id)"
                 + ")";
         db.execSQL(CREATE_CART_TABLE);
+        String CREATE_NOTIFICATIONS_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_NOTIFICATIONS + " ("
+                + COLUMN_NOTIFICATION_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COLUMN_NOTIFICATION_TYPE + " TEXT, "
+                + COLUMN_NOTIFICATION_MESSAGE + " TEXT, "
+                + COLUMN_NOTIFICATION_TIMESTAMP + " TEXT, "
+                + COLUMN_NOTIFICATION_IS_READ + " INTEGER DEFAULT 0)";
+        db.execSQL(CREATE_NOTIFICATIONS_TABLE);
     }
 
     // Upgrade method (if database version changes)
@@ -403,5 +419,55 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         db.close();
         return cartProducts;
+    }
+
+    // Insert a new notification
+    public void insertNotification(Notification notification) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NOTIFICATION_TYPE, notification.getType());
+        values.put(COLUMN_NOTIFICATION_MESSAGE, notification.getMessage());
+        values.put(COLUMN_NOTIFICATION_TIMESTAMP, notification.getTimestamp());
+        values.put(COLUMN_NOTIFICATION_IS_READ, notification.isRead() ? 1 : 0);
+        db.insert(TABLE_NOTIFICATIONS, null, values);
+        db.close();
+    }
+
+    // Get all notifications (most recent first)
+    public ArrayList<Notification> getAllNotifications() {
+        ArrayList<Notification> notifications = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NOTIFICATIONS + " ORDER BY " + COLUMN_NOTIFICATION_TIMESTAMP + " DESC", null);
+        if (cursor.moveToFirst()) {
+            do {
+                int id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NOTIFICATION_ID));
+                String type = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NOTIFICATION_TYPE));
+                String message = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NOTIFICATION_MESSAGE));
+                String timestamp = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NOTIFICATION_TIMESTAMP));
+                boolean isRead = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_NOTIFICATION_IS_READ)) == 1;
+                notifications.add(new Notification(id, type, message, timestamp, isRead));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return notifications;
+    }
+
+    // Mark a notification as read
+    public void markNotificationAsRead(int notificationId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NOTIFICATION_IS_READ, 1);
+        db.update(TABLE_NOTIFICATIONS, values, COLUMN_NOTIFICATION_ID + "=?", new String[]{String.valueOf(notificationId)});
+        db.close();
+    }
+
+    // Mark all notifications as read
+    public void markAllNotificationsAsRead() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NOTIFICATION_IS_READ, 1);
+        db.update(TABLE_NOTIFICATIONS, values, null, null);
+        db.close();
     }
 }
