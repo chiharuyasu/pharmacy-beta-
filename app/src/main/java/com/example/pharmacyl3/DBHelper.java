@@ -369,6 +369,13 @@ public class DBHelper extends SQLiteOpenHelper {
         return result != -1;
     }
 
+    // Clear all orders for a customer
+    public void clearOrderHistoryForCustomer(int customerId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_ORDERS, COLUMN_CUSTOMER_ID + "=?", new String[]{String.valueOf(customerId)});
+        db.close();
+    }
+
     // --- CART METHODS ---
     public void addOrUpdateCartItem(int customerId, int productId, int quantity) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -468,6 +475,13 @@ public class DBHelper extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NOTIFICATION_IS_READ, 1);
         db.update(TABLE_NOTIFICATIONS, values, null, null);
+        db.close();
+    }
+
+    // Clear all notifications
+    public void clearAllNotifications() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_NOTIFICATIONS, null, null);
         db.close();
     }
 }

@@ -17,6 +17,7 @@ public class AdminNotificationsActivity extends AppCompatActivity {
     private NotificationAdapter adapter;
     private TextView emptyView;
     private Button markAllAsReadButton;
+    private Button clearAllButton;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -26,6 +27,7 @@ public class AdminNotificationsActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_notifications);
         emptyView = findViewById(R.id.text_empty_notifications);
         markAllAsReadButton = findViewById(R.id.btn_mark_all_read);
+        clearAllButton = findViewById(R.id.btn_clear_all_notifications);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         DBHelper dbHelper = new DBHelper(this);
@@ -37,16 +39,28 @@ public class AdminNotificationsActivity extends AppCompatActivity {
             emptyView.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
             markAllAsReadButton.setVisibility(View.GONE);
+            clearAllButton.setVisibility(View.GONE);
         } else {
             emptyView.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             markAllAsReadButton.setVisibility(View.VISIBLE);
+            clearAllButton.setVisibility(View.VISIBLE);
         }
 
         markAllAsReadButton.setOnClickListener(v -> {
             dbHelper.markAllNotificationsAsRead();
             for (Notification n : notifications) n.setRead(true);
             adapter.notifyDataSetChanged();
+        });
+
+        clearAllButton.setOnClickListener(v -> {
+            dbHelper.clearAllNotifications();
+            notifications.clear();
+            adapter.notifyDataSetChanged();
+            emptyView.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+            markAllAsReadButton.setVisibility(View.GONE);
+            clearAllButton.setVisibility(View.GONE);
         });
 
         // Swipe to delete
@@ -67,6 +81,7 @@ public class AdminNotificationsActivity extends AppCompatActivity {
                     emptyView.setVisibility(View.VISIBLE);
                     recyclerView.setVisibility(View.GONE);
                     markAllAsReadButton.setVisibility(View.GONE);
+                    clearAllButton.setVisibility(View.GONE);
                 }
             }
         };

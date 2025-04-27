@@ -13,6 +13,16 @@
         android:title="Order History"
         android:titleTextColor="@android:color/white"/>
 
+    <Button
+        android:id="@+id/btn_clear_order_history"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clear order history"
+        android:backgroundTint="@color/primaryRed"
+        android:textColor="@android:color/white"
+        android:layout_gravity="end"
+        android:layout_margin="8dp"/>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvOrderHistory"
         android:layout_width="match_parent"

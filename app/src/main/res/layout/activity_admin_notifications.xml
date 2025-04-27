@@ -16,6 +16,16 @@
         android:layout_gravity="end"
         android:layout_marginBottom="8dp"/>
 
+    <Button
+        android:id="@+id/btn_clear_all_notifications"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clear all notifications"
+        android:backgroundTint="@color/primaryRed"
+        android:textColor="@android:color/white"
+        android:layout_gravity="end"
+        android:layout_marginBottom="8dp"/>
+
     <TextView
         android:id="@+id/text_empty_notifications"
         android:layout_width="match_parent"
