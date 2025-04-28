@@ -34,6 +34,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Button;
 import android.widget.TextView;
@@ -70,6 +71,10 @@ public class AdminActivity extends AppCompatActivity {
     private ImageView editDialogImageView;
     private String pendingBarcode = null;
     private AdminProductViewModel productViewModel;
+    private TextInputEditText etAdminCategoryFilter;
+    private String[] categories;
+    private ArrayList<String> selectedCategories = new ArrayList<>();
+    private String currentSearchQuery = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +90,16 @@ public class AdminActivity extends AppCompatActivity {
         setupCategoryFilter();
         fabAddProduct.setOnClickListener(v -> showAddProductDialog(null));
         updateProfileHeader();
+
+        etAdminCategoryFilter = findViewById(R.id.etAdminCategoryFilter);
+        categories = getResources().getStringArray(R.array.pharmacy_categories);
+        String[] allCategories = new String[categories.length + 1];
+        allCategories[0] = "All";
+        System.arraycopy(categories, 0, allCategories, 1, categories.length);
+        selectedCategories.clear();
+        selectedCategories.add("All");
+        etAdminCategoryFilter.setText("All");
+        etAdminCategoryFilter.setOnClickListener(v -> showCategoryMultiSelectDialog(allCategories));
 
         // --- LiveData & ViewModel integration ---
         productViewModel = new ViewModelProvider(this).get(AdminProductViewModel.class);
@@ -185,7 +200,8 @@ public class AdminActivity extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                filterProducts(s.toString());
+                currentSearchQuery = s.toString();
+                applyCombinedFilters();
             }
 
             @Override
@@ -197,14 +213,24 @@ public class AdminActivity extends AppCompatActivity {
         // Remove all content from this method, as we are not using AutoCompleteTextView or ChipGroup for admin filtering yet
     }
 
-    private void filterProducts(String query) {
-        ArrayList<Product> filteredList = new ArrayList<>();
+    private void applyCombinedFilters() {
+        ArrayList<Product> filtered = new ArrayList<>();
         for (Product product : productsList) {
-            if (product.getName().toLowerCase().contains(query.toLowerCase())) {
-                filteredList.add(product);
+            boolean matchesCategory = selectedCategories.contains("All");
+            if (!matchesCategory && product.getCategory() != null) {
+                for (String cat : selectedCategories) {
+                    if (product.getCategory().contains(cat)) {
+                        matchesCategory = true;
+                        break;
+                    }
+                }
+            }
+            boolean matchesQuery = product.getName().toLowerCase().contains(currentSearchQuery.toLowerCase());
+            if (matchesCategory && matchesQuery) {
+                filtered.add(product);
             }
         }
-        adapter.updateProducts(filteredList);
+        adapter.updateProducts(filtered);
     }
 
     private void showAddProductDialog(String barcode) {
@@ -865,5 +891,40 @@ public class AdminActivity extends AppCompatActivity {
             })
             .setNegativeButton("Cancel", null)
             .show();
+    }
+
+    private void showCategoryMultiSelectDialog(String[] allCategories) {
+        boolean[] checkedItems = new boolean[allCategories.length];
+        for (int i = 0; i < allCategories.length; i++) {
+            checkedItems[i] = selectedCategories.contains(allCategories[i]);
+        }
+        new AlertDialog.Builder(this)
+            .setTitle("Select Categories")
+            .setMultiChoiceItems(allCategories, checkedItems, (dialog, which, isChecked) -> {
+                if (isChecked) {
+                    if (!selectedCategories.contains(allCategories[which]))
+                        selectedCategories.add(allCategories[which]);
+                } else {
+                    selectedCategories.remove(allCategories[which]);
+                }
+            })
+            .setPositiveButton("OK", (dialog, which) -> {
+                if (selectedCategories.isEmpty()) {
+                    selectedCategories.add("All");
+                }
+                etAdminCategoryFilter.setText(android.text.TextUtils.join(", ", selectedCategories));
+                applyCombinedFilters();
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
+    }
+
+    private void filterProductsByCategory() {
+        applyCombinedFilters();
+    }
+
+    @Deprecated
+    private void filterProducts(String query) {
+        // Deprecated: use applyCombinedFilters instead
     }
 }

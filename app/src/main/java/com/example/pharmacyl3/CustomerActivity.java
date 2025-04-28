@@ -56,6 +56,7 @@ public class CustomerActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
     private NavigationView navView;
     private int customerId;
+    private String currentSearchQuery = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,13 +72,29 @@ public class CustomerActivity extends AppCompatActivity {
 
         // Initialize views
         rvProducts = findViewById(R.id.rvProducts);
-        searchEditText = null; // No search field in layout
+        searchEditText = findViewById(R.id.searchEditText);
         cartItemCount = findViewById(R.id.cartItemCount);
         cartButton = findViewById(R.id.cartButton);
         cartButtonContainer = findViewById(R.id.cartButtonContainer);
         etCategoryFilter = findViewById(R.id.etCategoryFilter);
         drawerLayout = findViewById(R.id.drawer_layout_customer);
         navView = findViewById(R.id.nav_view_customer);
+
+        if (searchEditText != null) {
+            searchEditText.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    currentSearchQuery = s.toString();
+                    applyCombinedFilters();
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
 
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
             this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -321,6 +338,26 @@ public class CustomerActivity extends AppCompatActivity {
         adapter.updateProducts(filteredList);
     }
 
+    private void applyCombinedFilters() {
+        filteredList.clear();
+        for (Product product : productsList) {
+            boolean matchesCategory = selectedCategories.isEmpty() || selectedCategories.contains("All");
+            if (!matchesCategory && product.getCategory() != null) {
+                for (String cat : selectedCategories) {
+                    if (product.getCategory().contains(cat)) {
+                        matchesCategory = true;
+                        break;
+                    }
+                }
+            }
+            boolean matchesQuery = product.getName().toLowerCase().contains(currentSearchQuery.toLowerCase());
+            if (matchesCategory && matchesQuery) {
+                filteredList.add(product);
+            }
+        }
+        adapter.notifyDataSetChanged();
+    }
+
     private void showCategoryMultiSelectDialog(String[] allCategories) {
         boolean[] checked = new boolean[allCategories.length];
         for (int i = 0; i < allCategories.length; i++) {
@@ -356,14 +393,14 @@ public class CustomerActivity extends AppCompatActivity {
                     if (selectedCategories.isEmpty()) {
                         selectedCategories.add("All");
                         etCategoryFilter.setText("All");
-                        filterByCategories(selectedCategories);
+                        applyCombinedFilters();
                     } else if (selectedCategories.contains("All")) {
                         etCategoryFilter.setText("All");
-                        filterByCategories(selectedCategories);
+                        applyCombinedFilters();
                     } else {
                         String cats = String.join(", ", selectedCategories);
                         etCategoryFilter.setText(cats);
-                        filterByCategories(selectedCategories);
+                        applyCombinedFilters();
                     }
                 })
                 .setNegativeButton("Cancel", null)
