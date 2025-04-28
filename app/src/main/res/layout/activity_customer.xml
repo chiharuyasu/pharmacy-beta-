@@ -69,30 +69,45 @@
                 <!-- Search Bar -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilSearch"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Search Products"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    app:startIconDrawable="@drawable/ic_search"
+                    app:startIconTint="@color/primaryGreen"
+                    app:boxStrokeColor="@color/primaryGreen"
+                    app:boxBackgroundColor="@color/backgroundWhite"
+                    android:layout_marginBottom="8dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/searchEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"/>
+                        android:inputType="text"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
+                <!-- Category Filter Bar -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilCategoryFilter"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Filter by Category"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    app:startIconDrawable="@drawable/ic_filter_list"
+                    app:startIconTint="@color/primaryGreen"
+                    app:boxStrokeColor="@color/primaryGreen"
+                    app:boxBackgroundColor="@color/backgroundWhite"
+                    android:layout_marginBottom="8dp">
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etCategoryFilter"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:focusable="false"
                         android:clickable="true"
-                        android:inputType="none" />
+                        android:inputType="none"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <androidx.recyclerview.widget.RecyclerView

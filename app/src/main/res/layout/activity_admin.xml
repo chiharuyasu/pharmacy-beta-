@@ -35,55 +35,51 @@
                 android:orientation="vertical">
 
                 <!-- Search Bar -->
-                <com.google.android.material.card.MaterialCardView
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilSearch"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:hint="Search Products"
+                    app:startIconDrawable="@drawable/ic_search"
+                    app:startIconTint="@color/primaryGreen"
+                    app:boxStrokeColor="@color/primaryGreen"
+                    app:boxBackgroundColor="@color/backgroundWhite"
                     android:layout_margin="16dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp">
-
-                    <com.google.android.material.textfield.TextInputLayout
+                    android:layout_marginBottom="8dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/searchEditText"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Search Products"
-                        android:padding="8dp"
-                        app:startIconDrawable="@android:drawable/ic_menu_search"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        android:inputType="text"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"/>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/searchEditText"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Category Filter -->
-                <com.google.android.material.card.MaterialCardView
+                <!-- Category Filter Bar -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilCategoryFilter"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:hint="Filter by Category"
+                    app:startIconDrawable="@drawable/ic_filter_list"
+                    app:startIconTint="@color/primaryGreen"
+                    app:boxStrokeColor="@color/primaryGreen"
+                    app:boxBackgroundColor="@color/backgroundWhite"
                     android:layout_marginLeft="16dp"
                     android:layout_marginRight="16dp"
-                    android:layout_marginTop="0dp"
-                    android:layout_marginBottom="8dp"
-                    app:cardCornerRadius="8dp"
-                    app:cardElevation="4dp">
-
-                    <com.google.android.material.textfield.TextInputLayout
+                    android:layout_marginBottom="8dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAdminCategoryFilter"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Filter by Category"
-                        android:padding="8dp"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/etAdminCategoryFilter"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:focusable="false"
-                            android:inputType="none"/>
-                    </com.google.android.material.textfield.TextInputLayout>
-                </com.google.android.material.card.MaterialCardView>
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:inputType="none"
+                        android:textColor="@color/black"
+                        android:textSize="16sp"/>
+                </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Products List -->
                 <androidx.recyclerview.widget.RecyclerView

@@ -57,11 +57,13 @@ pharmacy-beta-
   - **Live header update:** After editing and saving the profile, the drawer header updates immediately with the new name, phone, and photo.
   - Profile data is loaded and saved securely in SQLite.
 - **Product Browsing:** View available products, search, and filter.
+    - **NEW:** Customers can search products by name and filter by category, with both filters working together in real time (just like the admin interface).
 - **Cart & Orders:** Add items to cart, place orders, and view order history.
 
 ### Pharmacist/Admin Side
 - **Admin Dashboard:** Manage products, view orders, scan barcodes, and update inventory.
 - **Product Management:** Add, edit, and delete products with rich metadata.
+    - **NEW:** Admins can filter products by both category and search text at the same time for efficient management.
 - **Order Management:** View and manage all customer orders.
 - **Admin profile photo:** Admins can also set and update a circular profile photo in the header.
 
@@ -99,11 +101,25 @@ pharmacy-beta-
 - Bug fixes for profile photo not showing or causing crashes after editing.
 - **Dedicated Admin Profile Editing**: Added a new `AdminEditProfileActivity` for admins/pharmacists with fields for name, phone, license number, pharmacy name, address, years of experience, email, and profile photo. Admin profile data is stored in `SharedPreferences` via `ProfileManager`.
 - **Admin Profile Photo in Header**: Admins can set/update their profile photo. The navigation drawer header now reliably displays the updated photo (supports both content and file URIs).
-- **Separation of Profile Logic**: Customer and admin profile editing are now handled by separate activities for clarity and maintainability. Customer profile logic remains in the database, while admin profile logic uses `ProfileManager`.
-- **Live Header Update for Admin**: After editing the admin profile, the header updates immediately with the new name and photo.
-- **Improved Image Handling**: Fixed image loading logic to handle both `content://` and `file://` URIs, preventing crashes and ensuring compatibility with different image sources.
-- **Manifest Registration**: Registered the new `AdminEditProfileActivity` in `AndroidManifest.xml` to prevent crashes when launching the admin profile editor.
-- **Bug Fixes**: Addressed issues where admin profile changes (especially the photo) would not appear or would cause crashes.
+- **Combined Filtering for Admin**: The admin product list now supports combined filtering by both category and search text for fast and precise inventory management.
+- **Combined Filtering for Customer**: Customers can now search for products by name and filter by category simultaneously, making product discovery easier and more intuitive.
+- **Clear All Notifications:** Admins can now clear all notifications at once from the notifications screen using a dedicated button.
+- **Clear Order History:** Customers can clear their entire order history with a single tap from the order history screen.
+
+---
+
+## Inventory & Notification System (2025)
+- **Low Stock Notification:** Admins are alerted via a Snackbar and persistent notification when a product's stock falls below a threshold.
+- **Expiring Soon Notification:** Admins receive a Snackbar and notification when products are nearing expiry (default: within 30 days).
+- **Expired Product Notification:** Admins are notified via Snackbar and notification if any product has expired.
+- **Order Placed Notification:** When a customer places an order, admins receive a Snackbar alert (if active) and a persistent notification.
+- **Notifications Center:** Admins can view all alerts (low stock, expiring, expired, order placed) in a dedicated notifications activity.
+- **Snackbar 'VIEW' Action:** All Snackbars have a 'VIEW' button that opens the notifications screen for quick management.
+- **Database Notifications Table:** Added a notifications table to SQLite for tracking all admin alerts.
+- **Cart Quantity Picker:** Customers can select quantity when adding to cart; cart badge reflects total quantity.
+- **Bug Fixes:** Improved reliability of notification triggers, cart badge, and order processing.
+
+---
 
 ## Cart and Stock Logic Improvements (2025-04)
 - **Cart Logic Overhaul:**
@@ -120,21 +136,6 @@ pharmacy-beta-
 - **Consistency:**
   - Product list and cart are always in sync with the database after cart changes or checkout.
   - No more issues with premature stock reduction or incorrect stock warnings when adding to cart or checking out.
-
----
-
-## Inventory & Notification System (2025)
-- **Low Stock Notification:** Admins are alerted via a Snackbar and persistent notification when a product's stock falls below a threshold.
-- **Expiring Soon Notification:** Admins receive a Snackbar and notification when products are nearing expiry (default: within 30 days).
-- **Expired Product Notification:** Admins are notified via Snackbar and notification if any product has expired.
-- **Order Placed Notification:** When a customer places an order, admins receive a Snackbar alert (if active) and a persistent notification.
-- **Notifications Center:** Admins can view all alerts (low stock, expiring, expired, order placed) in a dedicated notifications activity.
-- **Snackbar 'VIEW' Action:** All Snackbars have a 'VIEW' button that opens the notifications screen for quick management.
-- **Database Notifications Table:** Added a notifications table to SQLite for tracking all admin alerts.
-- **Cart Quantity Picker:** Customers can select quantity when adding to cart; cart badge reflects total quantity.
-- **Bug Fixes:** Improved reliability of notification triggers, cart badge, and order processing.
-- **Clear All Notifications:** Admins can now clear all notifications at once from the notifications screen using a dedicated button.
-- **Clear Order History:** Customers can clear their entire order history with a single tap from the order history screen.
 
 ---
 
