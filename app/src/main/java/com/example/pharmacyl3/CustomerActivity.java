@@ -121,7 +121,7 @@ public class CustomerActivity extends AppCompatActivity {
         cartButton.setOnClickListener(v -> {
             Intent intent = new Intent(CustomerActivity.this, CartActivity.class);
             intent.putExtra("customerId", customerId);
-            startActivity(intent);
+            startActivityForResult(intent, 101);
         });
 
         categories = getResources().getStringArray(R.array.pharmacy_categories);
@@ -193,16 +193,50 @@ public class CustomerActivity extends AppCompatActivity {
         boolean found = false;
         for (Product p : cartItems) {
             if (p.getId() == product.getId()) {
-                p.setQuantity(p.getQuantity() + product.getQuantity());
+                // Only allow adding up to available stock
+                int totalDesired = p.getQuantity() + product.getQuantity();
+                int maxAllowed = 0;
+                for (Product prod : productsList) {
+                    if (prod.getId() == product.getId()) {
+                        maxAllowed = prod.getStock(); // Only check current DB stock, don't reduce yet
+                        break;
+                    }
+                }
+                if (totalDesired > maxAllowed) {
+                    Snackbar.make(findViewById(android.R.id.content),
+                            "You can only add up to " + maxAllowed + " items to your cart.",
+                            Snackbar.LENGTH_LONG).show();
+                    return;
+                }
+                p.setQuantity(totalDesired);
                 dbHelper.addOrUpdateCartItem(customerId, p.getId(), p.getQuantity());
                 found = true;
                 break;
             }
         }
         if (!found) {
+            // Only allow adding up to available stock
+            int maxAllowed = 0;
+            for (Product prod : productsList) {
+                if (prod.getId() == product.getId()) {
+                    maxAllowed = prod.getStock();
+                    break;
+                }
+            }
+            if (product.getQuantity() > maxAllowed) {
+                Snackbar.make(findViewById(android.R.id.content),
+                        "You can only add up to " + maxAllowed + " items to your cart.",
+                        Snackbar.LENGTH_LONG).show();
+                return;
+            }
             cartItems.add(product);
             dbHelper.addOrUpdateCartItem(customerId, product.getId(), product.getQuantity());
         }
+
+        // --- DO NOT update stock in product list here ---
+        // Stock will only be reduced after checkout
+        adapter.notifyDataSetChanged();
+
         updateCartBadge();
         cartButtonContainer.startAnimation(
             AnimationUtils.loadAnimation(this, R.anim.shake_animation));
@@ -210,9 +244,32 @@ public class CustomerActivity extends AppCompatActivity {
                      product.getName() + " added to cart", 
                      Snackbar.LENGTH_LONG)
                 .setAction("UNDO", v -> {
-                    removeFromCart(product);
+                    undoAddToCart(product);
                 })
                 .show();
+    }
+
+    // --- UNDO add to cart: remove from cart ---
+    private void undoAddToCart(Product product) {
+        // Remove from cart
+        for (int i = 0; i < cartItems.size(); i++) {
+            Product p = cartItems.get(i);
+            if (p.getId() == product.getId()) {
+                int newQty = p.getQuantity() - product.getQuantity();
+                if (newQty <= 0) {
+                    dbHelper.removeCartItem(customerId, p.getId());
+                    cartItems.remove(i);
+                } else {
+                    p.setQuantity(newQty);
+                    dbHelper.addOrUpdateCartItem(customerId, p.getId(), newQty);
+                }
+                break;
+            }
+        }
+        // --- DO NOT restore stock in product list here ---
+        // Stock is only managed after checkout
+        adapter.notifyDataSetChanged();
+        updateCartBadge();
     }
 
     private void removeFromCart(Product product) {
@@ -341,15 +398,12 @@ public class CustomerActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 101 && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri selectedImageUri = data.getData();
-            ImageView imgProfilePhoto = findViewById(R.id.imgProfilePhoto);
-            imgProfilePhoto.setImageURI(selectedImageUri);
-            // Save photo URI to DB
-            SharedPreferences prefs = getSharedPreferences("loginPrefs", MODE_PRIVATE);
-            String email = prefs.getString("REMEMBERED_EMAIL", "");
-            DBHelper dbHelper = new DBHelper(this);
-            dbHelper.updateCustomerProfilePhoto(email, selectedImageUri.toString());
+        if (resultCode == RESULT_OK) {
+            // Reload products from DB to reflect restored stock
+            productsList = dbHelper.getAllProducts();
+            filteredList.clear();
+            filteredList.addAll(productsList);
+            adapter.notifyDataSetChanged();
         }
     }
 
@@ -407,5 +461,9 @@ public class CustomerActivity extends AppCompatActivity {
                 imgProfilePhoto.setImageResource(R.drawable.ic_profile_placeholder);
             }
         }
+        // --- ADDED: Refresh cart from DB and update badge ---
+        cartItems = dbHelper.getCartItems(customerId);
+        if (cartItems == null) cartItems = new ArrayList<>();
+        updateCartBadge();
     }
 }

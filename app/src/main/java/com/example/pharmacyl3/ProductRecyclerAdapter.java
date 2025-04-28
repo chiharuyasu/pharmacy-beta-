@@ -92,10 +92,22 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
         if (isCustomerView) {
             holder.btnAddToCart.setVisibility(View.VISIBLE);
             holder.itemView.setOnClickListener(v -> productInteractionListener.onItemClick(product));
-            holder.btnAddToCart.setOnClickListener(v -> {
-                // Show quantity picker dialog
-                showQuantityPickerDialog(holder, product);
-            });
+            // Disable add to cart if out of stock
+            if (product.getStock() <= 0) {
+                holder.btnAddToCart.setEnabled(false);
+                holder.btnAddToCart.setText("Out of Stock");
+                holder.btnAddToCart.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
+                holder.btnAddToCart.setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.primaryRed));
+            } else {
+                holder.btnAddToCart.setEnabled(true);
+                holder.btnAddToCart.setText("Add to Cart");
+                holder.btnAddToCart.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
+                holder.btnAddToCart.setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.colorPrimary));
+                holder.btnAddToCart.setOnClickListener(v -> {
+                    // Show quantity picker dialog
+                    showQuantityPickerDialog(holder, product);
+                });
+            }
         } else {
             holder.btnAddToCart.setVisibility(View.GONE);
             holder.itemView.setOnClickListener(v -> itemClickListener.onItemClick(product));

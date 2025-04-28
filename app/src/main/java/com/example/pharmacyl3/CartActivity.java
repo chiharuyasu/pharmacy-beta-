@@ -63,6 +63,8 @@ public class CartActivity extends AppCompatActivity {
                 cartItems.remove(position);
                 adapter.notifyItemRemoved(position);
                 updateTotal();
+                // Restore stock in product list when removed from cart
+                restoreProductStock(product);
             }
         });
         rvCartItems.setAdapter(adapter);
@@ -78,9 +80,10 @@ public class CartActivity extends AppCompatActivity {
             }
             // Check stock availability before placing order
             for (Product product : cartItems) {
-                if (product.getQuantity() > product.getStock()) {
+                Product dbProduct = dbHelper.getProductById(product.getId());
+                if (dbProduct == null || product.getQuantity() > dbProduct.getStock()) {
                     Snackbar.make(rvCartItems,
-                        "Only " + product.getStock() + " items available for " + product.getName(),
+                        "Only " + (dbProduct != null ? dbProduct.getStock() : 0) + " items available for " + product.getName(),
                         Snackbar.LENGTH_LONG).show();
                     return;
                 }
@@ -96,11 +99,14 @@ public class CartActivity extends AppCompatActivity {
                     product.getPrice() * product.getQuantity(),
                     String.valueOf(System.currentTimeMillis())
                 );
-                // Decrease product stock in DB
-                int newStock = product.getStock() - product.getQuantity();
-                if (newStock < 0) newStock = 0;
-                product.setStock(newStock);
-                dbHelper.updateProduct(product);
+                // Decrease product stock in DB ONLY NOW
+                Product dbProduct = dbHelper.getProductById(product.getId());
+                if (dbProduct != null) {
+                    int newStock = dbProduct.getStock() - product.getQuantity();
+                    if (newStock < 0) newStock = 0;
+                    dbProduct.setStock(newStock);
+                    dbHelper.updateProduct(dbProduct);
+                }
                 totalQuantity += product.getQuantity();
                 productNames.add(product.getName());
             }
@@ -122,7 +128,10 @@ public class CartActivity extends AppCompatActivity {
             cartItems.clear();
             adapter.notifyDataSetChanged();
             updateTotal();
+            // --- ADDED: Finish CartActivity after purchase to force reload in CustomerActivity ---
             Snackbar.make(v, "Order placed! Cart cleared.", Snackbar.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
         });
     }
 
@@ -132,6 +141,17 @@ public class CartActivity extends AppCompatActivity {
             total += product.getPrice() * product.getQuantity();
         }
         tvTotalAmount.setText(String.format("$%.2f", total));
+    }
+
+    // --- Restore product stock when removed from cart ---
+    private void restoreProductStock(Product product) {
+        // Find the product in the database and increase its stock
+        Product dbProduct = dbHelper.getProductById(product.getId());
+        if (dbProduct != null) {
+            int restoredStock = dbProduct.getStock() + product.getQuantity();
+            dbProduct.setStock(restoredStock);
+            dbHelper.updateProduct(dbProduct);
+        }
     }
 
     @Override

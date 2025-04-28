@@ -105,7 +105,10 @@ public class AdminEditProfileActivity extends AppCompatActivity {
             Uri pickedImageUri = data.getData();
             if (pickedImageUri != null) {
                 try {
-                    selectedImageUri = pickedImageUri;
+                    // --- Copy image to internal storage for persistence ---
+                    String fileName = "admin_profile_photo.jpg";
+                    String filePath = FileUtils.copyUriToInternalStorage(this, pickedImageUri, fileName);
+                    selectedImageUri = Uri.fromFile(new java.io.File(filePath));
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), selectedImageUri);
                     imageViewProfileEdit.setImageBitmap(bitmap);
                 } catch (IOException e) {

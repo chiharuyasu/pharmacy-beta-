@@ -115,6 +115,8 @@ pharmacy-beta-
 - **Database Notifications Table:** Added a notifications table to SQLite for tracking all admin alerts.
 - **Cart Quantity Picker:** Customers can select quantity when adding to cart; cart badge reflects total quantity.
 - **Bug Fixes:** Improved reliability of notification triggers, cart badge, and order processing.
+- **Clear All Notifications:** Admins can now clear all notifications at once from the notifications screen using a dedicated button.
+- **Clear Order History:** Customers can clear their entire order history with a single tap from the order history screen.
 
 ---
 

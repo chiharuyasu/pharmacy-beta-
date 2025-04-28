@@ -226,6 +226,28 @@ public class DBHelper extends SQLiteOpenHelper {
         return product;
     }
 
+    // Retrieve a product by id
+    public Product getProductById(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.query(TABLE_PRODUCTS, null, COLUMN_ID + "=?", new String[]{String.valueOf(id)}, null, null, null);
+        Product product = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            String name = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME));
+            String description = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DESCRIPTION));
+            double price = cursor.getDouble(cursor.getColumnIndexOrThrow(COLUMN_PRICE));
+            int stock = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_STOCK));
+            String expiryDate = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EXPIRY_DATE));
+            String manufacturer = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MANUFACTURER));
+            String imageUri = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URI));
+            String barcodeValue = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BARCODE));
+            String category = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY));
+            product = new Product(id, name, description, price, stock, expiryDate, manufacturer, imageUri, barcodeValue, category);
+        }
+        if (cursor != null) cursor.close();
+        db.close();
+        return product;
+    }
+
     // --- CUSTOMER ACCOUNT METHODS ---
     public boolean customerExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
