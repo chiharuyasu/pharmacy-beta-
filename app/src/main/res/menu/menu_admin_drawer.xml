@@ -13,6 +13,14 @@
         android:title="Products"
         android:icon="@android:drawable/ic_menu_agenda"/>
     <item
+        android:id="@+id/nav_import_products"
+        android:title="Import Products"
+        android:icon="@android:drawable/ic_menu_upload" />
+    <item
+        android:id="@+id/nav_export_products"
+        android:title="Export Products"
+        android:icon="@android:drawable/ic_menu_save" />
+    <item
         android:id="@+id/nav_dashboard"
         android:title="Dashboard"
         android:icon="@android:drawable/ic_menu_info_details"/>

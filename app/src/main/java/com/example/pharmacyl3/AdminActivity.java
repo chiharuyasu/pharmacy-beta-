@@ -54,6 +54,8 @@ public class AdminActivity extends AppCompatActivity {
     private NavigationView navView;
     private static final int REQUEST_IMAGE_PICK = 1001;
     private static final int REQUEST_BARCODE_SCAN = 2002;
+    private static final int REQUEST_IMPORT_CSV = 3001;
+    private static final int REQUEST_EXPORT_CSV = 3002;
     private Uri selectedImageUri = null;
     private AlertDialog addProductDialog;
     private ImageView addDialogImageView;
@@ -128,6 +130,10 @@ public class AdminActivity extends AppCompatActivity {
                 startActivity(intent);
             } else if (id == R.id.nav_barcode_scanner) {
                 launchBarcodeScanner();
+            } else if (id == R.id.nav_import_products) {
+                startImportProductsFlow();
+            } else if (id == R.id.nav_export_products) {
+                startExportProductsFlow();
             } else if (id == R.id.nav_notifications) {
                 Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
                 startActivity(intent);
@@ -544,6 +550,9 @@ public class AdminActivity extends AppCompatActivity {
         if (requestCode == 2001 && resultCode == Activity.RESULT_OK) {
             updateProfileHeader();
         }
+        if (requestCode == REQUEST_IMPORT_CSV && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            importProductsFromCsv(data.getData());
+        }
     }
 
     private void updateProfileHeader() {
@@ -598,5 +607,123 @@ public class AdminActivity extends AppCompatActivity {
     private void launchBarcodeScanner() {
         Intent intent = new Intent(this, BarcodeScannerActivity.class);
         startActivityForResult(intent, REQUEST_BARCODE_SCAN);
+    }
+
+    private void startImportProductsFlow() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("text/csv");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(Intent.createChooser(intent, "Select CSV File"), REQUEST_IMPORT_CSV);
+    }
+
+    private void startExportProductsFlow() {
+        // Export products to CSV and share
+        try {
+            ArrayList<Product> products = dbHelper.getAllProducts();
+            StringBuilder csvBuilder = new StringBuilder();
+            csvBuilder.append("name,description,price,stock,expiryDate,manufacturer,imageUri,barcode,category\n");
+            for (Product p : products) {
+                csvBuilder.append(escapeCsv(p.getName())).append(",")
+                        .append(escapeCsv(p.getDescription())).append(",")
+                        .append(p.getPrice()).append(",")
+                        .append(p.getStock()).append(",")
+                        .append(escapeCsv(p.getExpiryDate())).append(",")
+                        .append(escapeCsv(p.getManufacturer())).append(",")
+                        .append(escapeCsv(p.getImageUri())).append(",")
+                        .append(escapeCsv(p.getBarcode())).append(",")
+                        .append(escapeCsv(p.getCategory())).append("\n");
+            }
+            String csv = csvBuilder.toString();
+            java.io.File file = new java.io.File(getExternalFilesDir(null), "products_export.csv");
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+            fos.write(csv.getBytes());
+            fos.close();
+            // Share the file
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("text/csv");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".provider", file));
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Share CSV File"));
+        } catch (Exception e) {
+            Snackbar.make(findViewById(android.R.id.content), "Export failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private String escapeCsv(String value) {
+        if (value == null) return "";
+        String v = value.replace("\"", "\"\"");
+        if (v.contains(",") || v.contains("\n") || v.contains("\"")) {
+            v = '"' + v + '"';
+        }
+        return v;
+    }
+
+    private void importProductsFromCsv(Uri uri) {
+        try {
+            java.io.InputStream is = getContentResolver().openInputStream(uri);
+            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
+            String line;
+            boolean isHeader = true;
+            int imported = 0, failed = 0;
+            while ((line = reader.readLine()) != null) {
+                if (isHeader) { isHeader = false; continue; }
+                String[] fields = parseCsvLine(line);
+                if (fields.length < 9) { failed++; continue; }
+                String name = fields[0];
+                String description = fields[1];
+                double price;
+                int stock;
+                try {
+                    price = Double.parseDouble(fields[2]);
+                    stock = Integer.parseInt(fields[3]);
+                } catch (Exception e) { failed++; continue; }
+                String expiryDate = fields[4];
+                String manufacturer = fields[5];
+                String imageUri = fields[6];
+                String barcode = fields[7];
+                String category = fields[8];
+                // Insert or update product by barcode
+                Product existing = dbHelper.getProductByBarcode(barcode);
+                if (existing != null) {
+                    existing.setName(name);
+                    existing.setDescription(description);
+                    existing.setPrice(price);
+                    existing.setStock(stock);
+                    existing.setExpiryDate(expiryDate);
+                    existing.setManufacturer(manufacturer);
+                    existing.setImageUri(imageUri);
+                    existing.setCategory(category);
+                    dbHelper.updateProduct(existing);
+                } else {
+                    Product p = new Product(name, description, price, stock, expiryDate, manufacturer, imageUri, barcode, category);
+                    dbHelper.insertProduct(p);
+                }
+                imported++;
+            }
+            reader.close();
+            Snackbar.make(findViewById(android.R.id.content), "Import complete: " + imported + " added/updated, " + failed + " failed.", Snackbar.LENGTH_LONG).show();
+            refreshData();
+        } catch (Exception e) {
+            Snackbar.make(findViewById(android.R.id.content), "Import failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private String[] parseCsvLine(String line) {
+        java.util.List<String> tokens = new java.util.ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        boolean inQuotes = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                tokens.add(sb.toString());
+                sb.setLength(0);
+            } else {
+                sb.append(c);
+            }
+        }
+        tokens.add(sb.toString());
+        return tokens.toArray(new String[0]);
     }
 }

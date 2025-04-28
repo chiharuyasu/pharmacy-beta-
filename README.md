@@ -105,7 +105,25 @@ pharmacy-beta-
 - **Manifest Registration**: Registered the new `AdminEditProfileActivity` in `AndroidManifest.xml` to prevent crashes when launching the admin profile editor.
 - **Bug Fixes**: Addressed issues where admin profile changes (especially the photo) would not appear or would cause crashes.
 
-### Inventory & Notification System (2025)
+## Cart and Stock Logic Improvements (2025-04)
+- **Cart Logic Overhaul:**
+  - Adding items to the cart does NOT reduce product stock immediately. Stock is only reduced after a successful checkout.
+  - The cart allows you to add up to the full available stock (as shown in the product list) regardless of previous cart actions.
+  - Undoing an add-to-cart operation only updates the cart, not the product stock.
+- **Checkout Process:**
+  - At checkout, the app checks the latest stock in the database for each product in your cart.
+  - If enough stock is available, the order is placed and product stock is reduced in the database.
+  - If not enough stock is available (e.g., another user bought the product first), a clear message is shown and the order is not placed for that product.
+- **Stock Restoration:**
+  - When you remove an item from the cart, the product stock is restored in the database.
+  - The product list UI is refreshed immediately after returning from the cart, so you always see the correct available stock.
+- **Consistency:**
+  - Product list and cart are always in sync with the database after cart changes or checkout.
+  - No more issues with premature stock reduction or incorrect stock warnings when adding to cart or checking out.
+
+---
+
+## Inventory & Notification System (2025)
 - **Low Stock Notification:** Admins are alerted via a Snackbar and persistent notification when a product's stock falls below a threshold.
 - **Expiring Soon Notification:** Admins receive a Snackbar and notification when products are nearing expiry (default: within 30 days).
 - **Expired Product Notification:** Admins are notified via Snackbar and notification if any product has expired.
