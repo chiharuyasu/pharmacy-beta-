@@ -2,7 +2,11 @@ package com.example.pharmacyl3;
 
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
+import android.os.Vibrator;
+import android.os.VibrationEffect;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.View;
@@ -20,6 +24,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning;
 import com.google.mlkit.vision.common.InputImage;
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.Context;
 import android.content.Intent;
 import java.io.IOException;
 import java.util.List;
@@ -162,6 +167,18 @@ public class BarcodeScannerActivity extends AppCompatActivity {
     }
 
     private void handleScanResult(String barcode) {
+        // Sound feedback
+        ToneGenerator toneGen = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+        toneGen.startTone(ToneGenerator.TONE_PROP_BEEP, 150);
+        // Vibration feedback
+        Vibrator vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator != null) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(150);
+            }
+        }
         Intent resultIntent = new Intent();
         resultIntent.putExtra("barcode", barcode);
         setResult(RESULT_OK, resultIntent);

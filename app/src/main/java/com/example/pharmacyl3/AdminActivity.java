@@ -41,6 +41,11 @@ import java.util.ArrayList;
 import com.example.pharmacyl3.R;
 import android.app.AlertDialog;
 import java.io.IOException;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class AdminActivity extends AppCompatActivity {
 
@@ -56,6 +61,8 @@ public class AdminActivity extends AppCompatActivity {
     private static final int REQUEST_BARCODE_SCAN = 2002;
     private static final int REQUEST_IMPORT_CSV = 3001;
     private static final int REQUEST_EXPORT_CSV = 3002;
+    private static final int REQUEST_IMPORT_EXCEL = 4001;
+    private static final int REQUEST_EXPORT_EXCEL = 4002;
     private Uri selectedImageUri = null;
     private AlertDialog addProductDialog;
     private ImageView addDialogImageView;
@@ -131,9 +138,9 @@ public class AdminActivity extends AppCompatActivity {
             } else if (id == R.id.nav_barcode_scanner) {
                 launchBarcodeScanner();
             } else if (id == R.id.nav_import_products) {
-                startImportProductsFlow();
+                showImportFormatDialog();
             } else if (id == R.id.nav_export_products) {
-                startExportProductsFlow();
+                showExportFormatDialog();
             } else if (id == R.id.nav_notifications) {
                 Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
                 startActivity(intent);
@@ -553,6 +560,9 @@ public class AdminActivity extends AppCompatActivity {
         if (requestCode == REQUEST_IMPORT_CSV && resultCode == RESULT_OK && data != null && data.getData() != null) {
             importProductsFromCsv(data.getData());
         }
+        if (requestCode == REQUEST_IMPORT_EXCEL && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            importProductsFromExcel(data.getData());
+        }
     }
 
     private void updateProfileHeader() {
@@ -616,6 +626,13 @@ public class AdminActivity extends AppCompatActivity {
         startActivityForResult(Intent.createChooser(intent, "Select CSV File"), REQUEST_IMPORT_CSV);
     }
 
+    private void startImportProductsExcelFlow() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(Intent.createChooser(intent, "Select Excel File"), REQUEST_IMPORT_EXCEL);
+    }
+
     private void startExportProductsFlow() {
         // Export products to CSV and share
         try {
@@ -644,6 +661,42 @@ public class AdminActivity extends AppCompatActivity {
             shareIntent.putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".provider", file));
             shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(shareIntent, "Share CSV File"));
+        } catch (Exception e) {
+            Snackbar.make(findViewById(android.R.id.content), "Export failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private void startExportProductsExcelFlow() {
+        try {
+            ArrayList<Product> products = dbHelper.getAllProducts();
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("Products");
+            Row header = sheet.createRow(0);
+            String[] columns = {"name","description","price","stock","expiryDate","manufacturer","imageUri","barcode","category"};
+            for (int i = 0; i < columns.length; i++) header.createCell(i).setCellValue(columns[i]);
+            for (int i = 0; i < products.size(); i++) {
+                Product p = products.get(i);
+                Row row = sheet.createRow(i + 1);
+                row.createCell(0).setCellValue(p.getName());
+                row.createCell(1).setCellValue(p.getDescription());
+                row.createCell(2).setCellValue(p.getPrice());
+                row.createCell(3).setCellValue(p.getStock());
+                row.createCell(4).setCellValue(p.getExpiryDate());
+                row.createCell(5).setCellValue(p.getManufacturer());
+                row.createCell(6).setCellValue(p.getImageUri());
+                row.createCell(7).setCellValue(p.getBarcode());
+                row.createCell(8).setCellValue(p.getCategory());
+            }
+            java.io.File file = new java.io.File(getExternalFilesDir(null), "products_export.xlsx");
+            java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
+            workbook.write(fos);
+            fos.close();
+            workbook.close();
+            Intent shareIntent = new Intent(Intent.ACTION_SEND);
+            shareIntent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            shareIntent.putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".provider", file));
+            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(shareIntent, "Share Excel File"));
         } catch (Exception e) {
             Snackbar.make(findViewById(android.R.id.content), "Export failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
         }
@@ -708,6 +761,65 @@ public class AdminActivity extends AppCompatActivity {
         }
     }
 
+    private void importProductsFromExcel(Uri uri) {
+        try {
+            java.io.InputStream is = getContentResolver().openInputStream(uri);
+            Workbook workbook = new XSSFWorkbook(is);
+            Sheet sheet = workbook.getSheetAt(0);
+            int imported = 0, failed = 0;
+            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+                String name = getCellString(row, 0);
+                String description = getCellString(row, 1);
+                double price;
+                int stock;
+                try {
+                    price = Double.parseDouble(getCellString(row, 2));
+                    stock = Integer.parseInt(getCellString(row, 3));
+                } catch (Exception e) { failed++; continue; }
+                String expiryDate = getCellString(row, 4);
+                String manufacturer = getCellString(row, 5);
+                String imageUri = getCellString(row, 6);
+                String barcode = getCellString(row, 7);
+                String category = getCellString(row, 8);
+                Product existing = dbHelper.getProductByBarcode(barcode);
+                if (existing != null) {
+                    existing.setName(name);
+                    existing.setDescription(description);
+                    existing.setPrice(price);
+                    existing.setStock(stock);
+                    existing.setExpiryDate(expiryDate);
+                    existing.setManufacturer(manufacturer);
+                    existing.setImageUri(imageUri);
+                    existing.setCategory(category);
+                    dbHelper.updateProduct(existing);
+                } else {
+                    Product p = new Product(name, description, price, stock, expiryDate, manufacturer, imageUri, barcode, category);
+                    dbHelper.insertProduct(p);
+                }
+                imported++;
+            }
+            workbook.close();
+            Snackbar.make(findViewById(android.R.id.content), "Import complete: " + imported + " added/updated, " + failed + " failed.", Snackbar.LENGTH_LONG).show();
+            refreshData();
+        } catch (Exception e) {
+            Snackbar.make(findViewById(android.R.id.content), "Import failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    private String getCellString(Row row, int cellIdx) {
+        Cell cell = row.getCell(cellIdx);
+        if (cell == null) return "";
+        switch (cell.getCellType()) {
+            case STRING: return cell.getStringCellValue();
+            case NUMERIC: return String.valueOf(cell.getNumericCellValue());
+            case BOOLEAN: return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA: return cell.getCellFormula();
+            default: return "";
+        }
+    }
+
     private String[] parseCsvLine(String line) {
         java.util.List<String> tokens = new java.util.ArrayList<>();
         StringBuilder sb = new StringBuilder();
@@ -725,5 +837,33 @@ public class AdminActivity extends AppCompatActivity {
         }
         tokens.add(sb.toString());
         return tokens.toArray(new String[0]);
+    }
+
+    private void showImportFormatDialog() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Import Format")
+            .setItems(new String[]{"CSV", "Excel (.xlsx)"}, (dialog, which) -> {
+                if (which == 0) {
+                    startImportProductsFlow();
+                } else {
+                    startImportProductsExcelFlow();
+                }
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
+    }
+
+    private void showExportFormatDialog() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Export Format")
+            .setItems(new String[]{"CSV", "Excel (.xlsx)"}, (dialog, which) -> {
+                if (which == 0) {
+                    startExportProductsFlow();
+                } else {
+                    startExportProductsExcelFlow();
+                }
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
     }
 }

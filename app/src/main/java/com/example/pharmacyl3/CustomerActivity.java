@@ -8,12 +8,14 @@ import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.AutoCompleteTextView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -174,6 +176,9 @@ public class CustomerActivity extends AppCompatActivity {
                     Intent intent = new Intent(CustomerActivity.this, OrderHistoryActivity.class);
                     intent.putExtra("customerId", customerId);
                     startActivity(intent);
+                } else if (id == R.id.nav_scan_to_sell) {
+                    Intent intent = new Intent(CustomerActivity.this, BarcodeScannerActivity.class);
+                    startActivityForResult(intent, 2002);
                 } else if (id == R.id.nav_logout) {
                     // Clear saved login (if Remember Me), return to LoginActivity
                     getSharedPreferences("loginPrefs", MODE_PRIVATE).edit().clear().apply();
@@ -398,6 +403,20 @@ public class CustomerActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 2002 && resultCode == RESULT_OK && data != null) {
+            String scannedBarcode = data.getStringExtra("barcode");
+            if (scannedBarcode != null) {
+                // Find product by barcode
+                for (Product product : productsList) {
+                    if (product.getBarcode() != null && product.getBarcode().equals(scannedBarcode)) {
+                        // Show quantity picker dialog (reuse add to cart logic)
+                        showQuantityPickerDialog(product);
+                        return;
+                    }
+                }
+                Snackbar.make(findViewById(android.R.id.content), "Product not found for scanned barcode", Snackbar.LENGTH_LONG).show();
+            }
+        }
         if (resultCode == RESULT_OK) {
             // Reload products from DB to reflect restored stock
             productsList = dbHelper.getAllProducts();
@@ -407,29 +426,30 @@ public class CustomerActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout_customer);
-        if (drawer.isDrawerOpen(android.view.Gravity.START)) {
-            drawer.closeDrawer(android.view.Gravity.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    private Bitmap getCircularBitmap(Bitmap bitmap) {
-        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
-        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(output);
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, size, size);
-        final RectF rectF = new RectF(rect);
-        paint.setAntiAlias(true);
-        canvas.drawARGB(0, 0, 0, 0);
-        canvas.drawOval(rectF, paint);
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(bitmap, null, rect, paint);
-        return output;
+    private void showQuantityPickerDialog(Product product) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_quantity_picker, null);
+        TextView tvProductName = dialogView.findViewById(R.id.tvDialogProductName);
+        TextView tvProductStock = dialogView.findViewById(R.id.tvDialogProductStock);
+        EditText etQuantity = dialogView.findViewById(R.id.etQuantity);
+        tvProductName.setText(product.getName());
+        tvProductStock.setText("Stock: " + product.getStock());
+        etQuantity.setText("1");
+        new AlertDialog.Builder(this)
+            .setTitle("Add to Cart")
+            .setView(dialogView)
+            .setPositiveButton("Add", (dialog, which) -> {
+                int qty = 1;
+                try {
+                    qty = Integer.parseInt(etQuantity.getText().toString());
+                } catch (NumberFormatException ignored) {}
+                if (qty < 1) qty = 1;
+                if (qty > product.getStock()) qty = product.getStock();
+                Product productCopy = new Product(product.getId(), product.getName(), product.getDescription(), product.getPrice(), product.getStock(), product.getExpiryDate(), product.getManufacturer(), product.getImageUri(), product.getBarcode(), product.getCategory());
+                productCopy.setQuantity(qty);
+                addToCart(productCopy);
+            })
+            .setNegativeButton("Cancel", null)
+            .show();
     }
 
     @Override
@@ -465,5 +485,30 @@ public class CustomerActivity extends AppCompatActivity {
         cartItems = dbHelper.getCartItems(customerId);
         if (cartItems == null) cartItems = new ArrayList<>();
         updateCartBadge();
+    }
+
+    private Bitmap getCircularBitmap(Bitmap bitmap) {
+        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
+        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, size, size);
+        final RectF rectF = new RectF(rect);
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        canvas.drawOval(rectF, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, null, rect, paint);
+        return output;
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = findViewById(R.id.drawer_layout_customer);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 }
