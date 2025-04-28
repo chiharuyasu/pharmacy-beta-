@@ -102,7 +102,6 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
                 holder.btnAddToCart.setEnabled(true);
                 holder.btnAddToCart.setText("Add to Cart");
                 holder.btnAddToCart.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
-                holder.btnAddToCart.setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.colorPrimary));
                 holder.btnAddToCart.setOnClickListener(v -> {
                     // Show quantity picker dialog
                     showQuantityPickerDialog(holder, product);
@@ -120,9 +119,25 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
         TextView tvProductName = dialogView.findViewById(R.id.tvDialogProductName);
         TextView tvProductStock = dialogView.findViewById(R.id.tvDialogProductStock);
         EditText etQuantity = dialogView.findViewById(R.id.etQuantity);
+        MaterialButton btnIncrease = dialogView.findViewById(R.id.btnIncrease);
+        MaterialButton btnDecrease = dialogView.findViewById(R.id.btnDecrease);
         tvProductName.setText(product.getName());
         tvProductStock.setText("Stock: " + product.getStock());
         etQuantity.setText("1");
+
+        btnIncrease.setOnClickListener(v -> {
+            int qty = 1;
+            try { qty = Integer.parseInt(etQuantity.getText().toString()); } catch (Exception ignored) {}
+            if (qty < product.getStock()) qty++;
+            etQuantity.setText(String.valueOf(qty));
+        });
+        btnDecrease.setOnClickListener(v -> {
+            int qty = 1;
+            try { qty = Integer.parseInt(etQuantity.getText().toString()); } catch (Exception ignored) {}
+            if (qty > 1) qty--;
+            etQuantity.setText(String.valueOf(qty));
+        });
+
         new AlertDialog.Builder(holder.itemView.getContext())
                 .setTitle("Select Quantity")
                 .setView(dialogView)
