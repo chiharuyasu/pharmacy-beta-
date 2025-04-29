@@ -53,14 +53,15 @@ public class AdminNotificationsActivity extends AppCompatActivity {
             adapter.notifyDataSetChanged();
         });
 
-        clearAllButton.setOnClickListener(v -> {
-            dbHelper.clearAllNotifications();
-            notifications.clear();
-            adapter.notifyDataSetChanged();
-            emptyView.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-            markAllAsReadButton.setVisibility(View.GONE);
-            clearAllButton.setVisibility(View.GONE);
+        clearAllButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dbHelper.clearAllNotifications();
+                notifications.clear();
+                adapter.notifyDataSetChanged();
+                emptyView.setVisibility(View.VISIBLE);
+                recyclerView.setVisibility(View.GONE);
+            }
         });
 
         // Swipe to delete

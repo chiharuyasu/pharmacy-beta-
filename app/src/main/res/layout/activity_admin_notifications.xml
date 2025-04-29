@@ -7,36 +7,6 @@
     android:padding="16dp"
     android:background="@color/backgroundWhite">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_mark_all_read"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Mark all as read"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        app:icon="@drawable/ic_done_all"
-        app:iconTint="@color/primaryGreen"
-        app:strokeColor="@color/primaryGreen"
-        app:strokeWidth="1dp"
-        app:cornerRadius="16dp"
-        android:textColor="@color/primaryGreen"
-        android:layout_gravity="end"
-        android:layout_marginBottom="8dp"/>
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_clear_all_notifications"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Clear all notifications"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        app:icon="@drawable/ic_delete"
-        app:iconTint="@color/primaryRed"
-        app:strokeColor="@color/primaryRed"
-        app:strokeWidth="1dp"
-        app:cornerRadius="16dp"
-        android:textColor="@color/primaryRed"
-        android:layout_gravity="end"
-        android:layout_marginBottom="8dp"/>
-
     <TextView
         android:id="@+id/text_empty_notifications"
         android:layout_width="match_parent"
@@ -52,4 +22,44 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_mark_all_read"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mark all as read"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            app:icon="@drawable/ic_done_all"
+            app:iconTint="@color/primaryGreen"
+            app:strokeColor="@color/primaryGreen"
+            app:strokeWidth="1dp"
+            app:cornerRadius="16dp"
+            android:textColor="@color/primaryGreen"
+            android:layout_marginEnd="8dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_clear_all_notifications"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear all notifications"
+            style="@style/Widget.MaterialComponents.Button"
+            app:icon="@drawable/ic_delete"
+            app:iconTint="@android:color/white"
+            app:backgroundTint="@color/primaryRed"
+            app:cornerRadius="16dp"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
+
 </LinearLayout>

@@ -44,7 +44,8 @@ public class OrderHistoryActivity extends AppCompatActivity {
             orderList.clear();
             adapter.notifyDataSetChanged();
             Toast.makeText(this, "Order history cleared.", Toast.LENGTH_SHORT).show();
-            clearOrderHistoryButton.setVisibility(View.GONE);
+            // Do NOT hide the button
+            // clearOrderHistoryButton.setVisibility(View.GONE);
         });
     }
 }

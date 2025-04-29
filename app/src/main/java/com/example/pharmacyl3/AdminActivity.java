@@ -135,7 +135,7 @@ public class AdminActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        toolbar.setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_menu_overflow_material);
+        toolbar.setNavigationIcon(R.drawable.ic_menu_hamburger);
         toolbar.setNavigationOnClickListener(v -> admindrawer.openDrawer(GravityCompat.START));
         navView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();

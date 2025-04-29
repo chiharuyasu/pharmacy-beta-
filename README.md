@@ -93,6 +93,24 @@ pharmacy-beta-
 
 ---
 
+## UI/UX & Material Design Enhancements
+
+- **Material Buttons:** All primary and secondary actions across the app now use MaterialButton for a modern look and consistent touch feedback.
+- **Quantity Picker Dialog:**
+  - Upgraded to use MaterialButtons for + and - actions.
+  - Removed the redundant confirm button; confirmation is now via the dialog's positive action only.
+  - Fixed logic for increment/decrement to ensure quantity is always valid and within stock limits.
+- **Notification Screen (Admin):**
+  - Action buttons upgraded to outlined MaterialButtons with icons and color polish.
+  - Notification item cards redesigned with MaterialCardView, rounded corners, elevation, and chip-style type labels.
+- **Admin Dashboard:**
+  - Stats (total products, money, low stock, expiring soon) are now grouped in a MaterialCardView with color accents and improved spacing.
+  - Dashboard title uses primary green for brand consistency.
+- **General:**
+  - Improved padding, margins, and backgrounds for a clean, modern Material look throughout the app.
+
+---
+
 ## Recent Feature Additions & Fixes
 - Persistent, circular profile photos for both customers and admins.
 - Live drawer header update after editing profile (name, phone, photo).
