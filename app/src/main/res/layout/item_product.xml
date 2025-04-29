@@ -4,82 +4,109 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="12dp"
+    android:layout_margin="10dp"
     app:cardCornerRadius="16dp"
-    app:cardElevation="8dp"
+    app:cardElevation="4dp"
     app:cardBackgroundColor="@color/backgroundWhite">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="horizontal"
+        android:padding="12dp">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/ivProductImage"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:scaleType="centerCrop"
             app:shapeAppearanceOverlay="@style/RoundedImage"
-            android:layout_marginBottom="12dp"
-            android:contentDescription="Product Image"
-            android:src="@drawable/ic_add_photo" />
-
-        <TextView
-            android:id="@+id/tvProductName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@color/primaryGreen"
-            android:layout_marginBottom="2dp"
-            android:maxLines="1"
-            android:ellipsize="end"/>
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupProductCategories"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            app:singleLine="true"
-            app:chipSpacing="6dp" />
-
-        <TextView
-            android:id="@+id/tvProductDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:textColor="@color/black"
-            android:textSize="15sp"/>
+            android:src="@drawable/ic_add_photo"
+            android:contentDescription="Product Image" />
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="16dp"
-            android:gravity="center_vertical">
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
+
+            <TextView
+                android:id="@+id/tvProductName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primaryGreen"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupProductCategories"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:singleLine="true"
+                app:chipSpacing="6dp" />
+
+            <TextView
+                android:id="@+id/tvProductDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:textColor="@color/black"
+                android:textSize="15sp"/>
 
             <TextView
                 android:id="@+id/tvProductPrice"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textColor="@color/primaryGreen"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnAddToCart"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="Add to Cart"
-                app:icon="@drawable/ic_shopping_cart"
-                app:iconGravity="textStart"
-                android:textColor="@android:color/white"
-                app:backgroundTint="@color/primaryGreen"
-                style="@style/Widget.MaterialComponents.Button"/>
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="@color/primaryGreen"
+                android:layout_marginTop="4dp"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/tvProductStock"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:text="Stock: 0"
+                    android:textColor="@android:color/white"
+                    app:chipBackgroundColor="@color/primaryRed"
+                    android:textSize="12sp"
+                    android:paddingLeft="8dp"
+                    android:paddingRight="8dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp"
+                    android:layout_marginEnd="6dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <!-- Add more badges here as needed -->
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="10dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddToCart"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:text="Add to Cart"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:textColor="@android:color/white"
+                    android:backgroundTint="@color/primaryGreen"
+                    android:layout_marginEnd="8dp"/>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

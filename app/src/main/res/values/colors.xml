@@ -10,5 +10,6 @@
     <color name="textColor">#333333</color>
     <color name="black">#000000</color>
     <color name="primaryRed">#C62828</color>
+    <color name="chipAvailableCustomer">#9C27B0</color>
 
 </resources>

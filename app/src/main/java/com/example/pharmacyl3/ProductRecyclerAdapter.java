@@ -88,27 +88,47 @@ public class ProductRecyclerAdapter extends RecyclerView.Adapter<ProductRecycler
             holder.ivProductImage.setImageResource(R.drawable.ic_add_photo);
         }
 
-        // Show/hide add to cart button based on view type
+        Chip tvProductStock = holder.itemView.findViewById(R.id.tvProductStock);
         if (isCustomerView) {
-            holder.btnAddToCart.setVisibility(View.VISIBLE);
-            holder.itemView.setOnClickListener(v -> productInteractionListener.onItemClick(product));
-            // Disable add to cart if out of stock
-            if (product.getStock() <= 0) {
-                holder.btnAddToCart.setEnabled(false);
-                holder.btnAddToCart.setText("Out of Stock");
-                holder.btnAddToCart.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
-                holder.btnAddToCart.setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.primaryRed));
+            if (product.getStock() > 0) {
+                tvProductStock.setText("Available");
+                tvProductStock.setChipBackgroundColorResource(R.color.chipAvailableCustomer);
+                tvProductStock.setVisibility(View.VISIBLE);
             } else {
-                holder.btnAddToCart.setEnabled(true);
-                holder.btnAddToCart.setText("Add to Cart");
-                holder.btnAddToCart.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
-                holder.btnAddToCart.setOnClickListener(v -> {
-                    // Show quantity picker dialog
-                    showQuantityPickerDialog(holder, product);
-                });
+                tvProductStock.setVisibility(View.GONE);
             }
         } else {
-            holder.btnAddToCart.setVisibility(View.GONE);
+            tvProductStock.setText("Stock: " + product.getStock());
+            tvProductStock.setChipBackgroundColorResource(R.color.primaryRed);
+            tvProductStock.setVisibility(View.VISIBLE);
+        }
+
+        // Show/hide add to cart button based on view type
+        if (isCustomerView) {
+            if (holder.btnAddToCart != null) {
+                holder.itemView.setOnClickListener(v -> productInteractionListener.onItemClick(product));
+                if (product.getStock() <= 0) {
+                    holder.btnAddToCart.setEnabled(false);
+                    holder.btnAddToCart.setText("Out of Stock");
+                    holder.btnAddToCart.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
+                    holder.btnAddToCart.setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.primaryRed));
+                    holder.btnAddToCart.setVisibility(View.VISIBLE);
+                } else {
+                    holder.btnAddToCart.setEnabled(true);
+                    holder.btnAddToCart.setText("Add to Cart");
+                    holder.btnAddToCart.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.white));
+                    holder.btnAddToCart.setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.primaryGreen));
+                    holder.btnAddToCart.setOnClickListener(v -> {
+                        // Show quantity picker dialog
+                        showQuantityPickerDialog(holder, product);
+                    });
+                    holder.btnAddToCart.setVisibility(View.VISIBLE);
+                }
+            }
+        } else {
+            if (holder.btnAddToCart != null) {
+                holder.btnAddToCart.setVisibility(View.GONE);
+            }
             holder.itemView.setOnClickListener(v -> itemClickListener.onItemClick(product));
         }
     }

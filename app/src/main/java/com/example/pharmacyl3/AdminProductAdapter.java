@@ -72,6 +72,9 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
             holder.ivProductImage.setImageResource(R.drawable.ic_add_photo);
         }
         
+        Chip tvProductStock = holder.itemView.findViewById(R.id.tvProductStock);
+        tvProductStock.setText("Stock: " + product.getStock());
+        
         holder.itemView.setOnClickListener(v -> listener.onItemClick(product));
         holder.btnEdit.setOnClickListener(v -> listener.onEditClick(product));
         holder.btnDelete.setOnClickListener(v -> listener.onDeleteClick(product));
@@ -88,7 +91,7 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvProductName, tvProductPrice, tvProductDescription, tvProductExpiryDate, tvProductManufacturer;
+        TextView tvProductName, tvProductPrice, tvProductDescription, tvProductExpiryDate, tvProductManufacturer, tvProductStock;
         MaterialButton btnEdit, btnDelete;
         ImageView ivProductImage;
         public ViewHolder(@NonNull View itemView) {
@@ -98,6 +101,7 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
             tvProductDescription = itemView.findViewById(R.id.tvProductDescription);
             tvProductExpiryDate = itemView.findViewById(R.id.tvProductExpiryDate);
             tvProductManufacturer = itemView.findViewById(R.id.tvProductManufacturer);
+            tvProductStock = itemView.findViewById(R.id.tvProductStock);
             btnEdit = itemView.findViewById(R.id.btnEdit);
             btnDelete = itemView.findViewById(R.id.btnDelete);
             ivProductImage = itemView.findViewById(R.id.ivProductImage);

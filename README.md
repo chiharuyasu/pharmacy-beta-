@@ -41,7 +41,6 @@ pharmacy-beta-
 ├── build.gradle.kts
 ├── settings.gradle.kts
 └── ...
-```
 
 ---
 
@@ -108,6 +107,24 @@ pharmacy-beta-
   - Dashboard title uses primary green for brand consistency.
 - **General:**
   - Improved padding, margins, and backgrounds for a clean, modern Material look throughout the app.
+
+---
+
+## Recent Changes
+
+### UI Improvements
+- Updated admin notification screen with Floating Action Buttons (FABs)
+- Changed customer product availability indicator to purple Material Chip
+- Modified stock display to show "Available" instead of exact numbers
+- Added empty state for notification list
+
+### Bug Fixes
+- Fixed TextView import issue in AdminNotificationsActivity
+- Removed unused clearAllNotifications() method
+
+### Layout Changes
+- Removed temporary out-of-stock indicator from customer view
+- Adjusted product item layout constraints
 
 ---
 
