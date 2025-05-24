@@ -48,4 +48,5 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.2.3")
     implementation("com.fasterxml:aalto-xml:1.0.0")
     implementation("javax.xml.stream:stax-api:1.0")
+    implementation("net.lingala.zip4j:zip4j:2.11.5")
 }

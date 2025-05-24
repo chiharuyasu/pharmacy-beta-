@@ -1,32 +1,49 @@
 package com.example.pharmacyl3;
 
+import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Path;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.RectF;
-import android.graphics.Xfermode;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+
+import com.example.pharmacyl3.utils.NotificationHelper;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
@@ -34,19 +51,29 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.Button;
-import android.widget.TextView;
-import java.util.ArrayList;
-import com.example.pharmacyl3.R;
-import android.app.AlertDialog;
-import java.io.IOException;
+
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.model.enums.CompressionLevel;
+import net.lingala.zip4j.model.enums.CompressionMethod;
+
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class AdminActivity extends AppCompatActivity {
 
@@ -58,12 +85,16 @@ public class AdminActivity extends AppCompatActivity {
     private TextInputEditText searchEditText;
     private DrawerLayout admindrawer;
     private NavigationView navView;
+    private static final String TAG = "AdminActivity"; // Added missing constant
+    private static final String IMAGES_DIR = "images";
     private static final int REQUEST_IMAGE_PICK = 1001;
     private static final int REQUEST_BARCODE_SCAN = 2002;
+    private static final int REQUEST_IMPORT_ZIP = 1001;
     private static final int REQUEST_IMPORT_CSV = 3001;
     private static final int REQUEST_EXPORT_CSV = 3002;
     private static final int REQUEST_IMPORT_EXCEL = 4001;
     private static final int REQUEST_EXPORT_EXCEL = 4002;
+    private static final int STORAGE_PERMISSION_CODE = 10001;
     private Uri selectedImageUri = null;
     private AlertDialog addProductDialog;
     private ImageView addDialogImageView;
@@ -116,6 +147,54 @@ public class AdminActivity extends AppCompatActivity {
         });
         // Initial load
         refreshData();
+    }
+
+    private void updateProfileHeader() {
+        // Update the navigation header with user information
+        try {
+            View headerView = navView.getHeaderView(0);
+            if (headerView != null) {
+                // Try to find and update user name
+                try {
+                    TextView tvUserName = headerView.findViewById(getResources().getIdentifier("tvUserName", "id", getPackageName()));
+                    if (tvUserName != null) {
+                        tvUserName.setText("Admin User");
+                    }
+                } catch (Exception e) {
+                    // View not found, ignore
+                }
+                
+                // Try to find and update user email
+                try {
+                    TextView tvUserEmail = headerView.findViewById(getResources().getIdentifier("tvUserEmail", "id", getPackageName()));
+                    if (tvUserEmail != null) {
+                        tvUserEmail.setText("admin@pharmacy.com");
+                    }
+                } catch (Exception e) {
+                    // View not found, ignore
+                }
+                
+                // Try to find and update profile image
+                try {
+                    ImageView imgProfile = headerView.findViewById(getResources().getIdentifier("imgProfile", "id", getPackageName()));
+                    // You can load profile image here if needed
+                } catch (Exception e) {
+                    // View not found, ignore
+                }
+            }
+        } catch (Exception e) {
+            // Header view not found or other error, ignore
+        }
+    }
+
+    private void launchBarcodeScanner() {
+        // Launch barcode scanner activity
+        try {
+            Intent intent = new Intent(AdminActivity.this, BarcodeScannerActivity.class);
+            startActivityForResult(intent, REQUEST_BARCODE_SCAN);
+        } catch (Exception e) {
+            Toast.makeText(this, "Barcode scanner not available", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void initializeViews() {
@@ -397,7 +476,10 @@ public class AdminActivity extends AppCompatActivity {
                 .setPositiveButton("Delete", (dialog, which) -> {
                     dbHelper.deleteProduct(product.getId());
                     refreshData();
-                    showSnackbar("Product deleted");
+                    String message = "Deleted product: " + product.getName();
+                    showSnackbar(message);
+                    // Show a notification for the deleted product
+                    NotificationHelper.showNotification(this, "Product Deleted", message);
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -423,6 +505,8 @@ public class AdminActivity extends AppCompatActivity {
 
     private void showSnackbar(String message) {
         Snackbar.make(findViewById(android.R.id.content), message, Snackbar.LENGTH_SHORT).show();
+        // Also show as notification
+        NotificationHelper.showNotification(this, "Pharmacy App", message);
     }
 
     private String copyImageToInternalStorage(Uri uri, String fileName) {
@@ -541,13 +625,10 @@ public class AdminActivity extends AppCompatActivity {
     }
 
     public void showOrderPlacedSnackbar(String customerName, int totalQuantity) {
-        String msg = "Order placed: " + customerName + " bought " + totalQuantity + " items.";
-        Snackbar.make(rvProducts, msg, Snackbar.LENGTH_LONG)
-            .setAction("VIEW", v -> {
-                Intent intent = new Intent(AdminActivity.this, AdminNotificationsActivity.class);
-                startActivity(intent);
-            })
-            .show();
+        String message = "Order placed for " + customerName + " with " + totalQuantity + " items";
+        showSnackbar(message);
+        // Show a more prominent notification for new orders
+        NotificationHelper.showNotification(this, "New Order Placed", message);
     }
 
     @Override
@@ -559,8 +640,75 @@ public class AdminActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private boolean checkStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // For Android 13+, check if we have the media permissions
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{
+                            Manifest.permission.READ_MEDIA_IMAGES,
+                            Manifest.permission.READ_MEDIA_VIDEO,
+                            Manifest.permission.READ_MEDIA_AUDIO
+                        },
+                        STORAGE_PERMISSION_CODE);
+                return false;
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // For Android 6.0 to 12L, check for READ_EXTERNAL_STORAGE
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE
+                        },
+                        STORAGE_PERMISSION_CODE);
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == STORAGE_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, you can now perform the file operation
+                Toast.makeText(this, "Permission granted! Try the import again.", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission denied. Cannot import files.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+            Uri uri = data.getData();
+            try {
+                // Take persistable URI permission
+                int takeFlags = 0;
+                // Check for read permission flag
+                if ((data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
+                    takeFlags |= Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                }
+                // Check for write permission flag
+                if ((data.getFlags() & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != 0) {
+                    takeFlags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+                }
+                // Only call if we have valid flags
+                if (takeFlags != 0) {
+                    getContentResolver().takePersistableUriPermission(uri, takeFlags);
+                }
+
+                if (requestCode == REQUEST_IMPORT_ZIP) {
+                    importProductsFromZip(uri);
+                }
+            } catch (Exception e) {
+                showSnackbar("Error accessing file: " + e.getMessage());
+            }
+        }
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_IMAGE_PICK && resultCode == Activity.RESULT_OK && data != null) {
             selectedImageUri = data.getData();
@@ -591,159 +739,136 @@ public class AdminActivity extends AppCompatActivity {
         }
     }
 
-    private void updateProfileHeader() {
-        // Get header view from NavigationView
-        View headerView = navView.getHeaderView(0);
-        ImageView imageViewProfile = headerView.findViewById(R.id.imageViewProfile);
-        TextView textViewName = headerView.findViewById(R.id.textViewName);
-        TextView textViewEmail = headerView.findViewById(R.id.textViewEmail);
-
-        String name = ProfileManager.getName(this);
-        String phone = ProfileManager.getPhone(this);
-        Uri profilePicUri = ProfileManager.getProfilePicUri(this);
-        if (!name.isEmpty()) textViewName.setText(name);
-        if (!phone.isEmpty()) textViewEmail.setText(phone);
-        if (profilePicUri != null) {
-            try {
-                Bitmap bitmap;
-                if (profilePicUri.getScheme() != null && profilePicUri.getScheme().startsWith("content")) {
-                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), profilePicUri);
-                } else {
-                    bitmap = BitmapFactory.decodeFile(profilePicUri.getPath());
-                }
-                if (bitmap != null) {
-                    Bitmap circularBitmap = getCircularBitmap(bitmap);
-                    imageViewProfile.setImageBitmap(circularBitmap);
-                } else {
-                    imageViewProfile.setImageResource(R.drawable.ic_person);
-                }
-            } catch (Exception e) {
-                imageViewProfile.setImageResource(R.drawable.ic_person);
-            }
-        } else {
-            imageViewProfile.setImageResource(R.drawable.ic_person);
-        }
-    }
-
-    private Bitmap getCircularBitmap(Bitmap bitmap) {
-        int size = Math.min(bitmap.getWidth(), bitmap.getHeight());
-        Bitmap output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-
-        Canvas canvas = new Canvas(output);
-        final Paint paint = new Paint();
-        final RectF rect = new RectF(0, 0, size, size);
-        float radius = size / 2f;
-        paint.setAntiAlias(true);
-        canvas.drawCircle(radius, radius, radius, paint);
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(bitmap, null, rect, paint);
-        return output;
-    }
-
-    private void launchBarcodeScanner() {
-        Intent intent = new Intent(this, BarcodeScannerActivity.class);
-        startActivityForResult(intent, REQUEST_BARCODE_SCAN);
-    }
-
-    private void startImportProductsFlow() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("text/csv");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(Intent.createChooser(intent, "Select CSV File"), REQUEST_IMPORT_CSV);
-    }
-
-    private void startImportProductsExcelFlow() {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(Intent.createChooser(intent, "Select Excel File"), REQUEST_IMPORT_EXCEL);
-    }
-
-    private void startExportProductsFlow() {
-        // Export products to CSV and share
+    private void importProductsFromZip(Uri zipUri) {
+        File tempDir = null;
         try {
-            ArrayList<Product> products = dbHelper.getAllProducts();
-            StringBuilder csvBuilder = new StringBuilder();
-            csvBuilder.append("name,description,price,stock,expiryDate,manufacturer,imageUri,barcode,category\n");
-            for (Product p : products) {
-                csvBuilder.append(escapeCsv(p.getName())).append(",")
-                        .append(escapeCsv(p.getDescription())).append(",")
-                        .append(p.getPrice()).append(",")
-                        .append(p.getStock()).append(",")
-                        .append(escapeCsv(p.getExpiryDate())).append(",")
-                        .append(escapeCsv(p.getManufacturer())).append(",")
-                        .append(escapeCsv(p.getImageUri())).append(",")
-                        .append(escapeCsv(p.getBarcode())).append(",")
-                        .append(escapeCsv(p.getCategory())).append("\n");
+            // Extract zip to temporary directory
+            tempDir = ExportImportUtils.extractZip(this, zipUri, "temp_import_" + System.currentTimeMillis());
+            
+            // Look for products.csv in the extracted files
+            File csvFile = new File(tempDir, "products.csv");
+            if (!csvFile.exists()) {
+                showSnackbar("No products.csv found in the ZIP file");
+                return;
             }
-            String csv = csvBuilder.toString();
-            java.io.File file = new java.io.File(getExternalFilesDir(null), "products_export.csv");
-            java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
-            fos.write(csv.getBytes());
-            fos.close();
-            // Share the file
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("text/csv");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".provider", file));
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(shareIntent, "Share CSV File"));
-        } catch (Exception e) {
-            Snackbar.make(findViewById(android.R.id.content), "Export failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
-        }
-    }
-
-    private void startExportProductsExcelFlow() {
-        try {
-            ArrayList<Product> products = dbHelper.getAllProducts();
-            Workbook workbook = new XSSFWorkbook();
-            Sheet sheet = workbook.createSheet("Products");
-            Row header = sheet.createRow(0);
-            String[] columns = {"name","description","price","stock","expiryDate","manufacturer","imageUri","barcode","category"};
-            for (int i = 0; i < columns.length; i++) header.createCell(i).setCellValue(columns[i]);
-            for (int i = 0; i < products.size(); i++) {
-                Product p = products.get(i);
-                Row row = sheet.createRow(i + 1);
-                row.createCell(0).setCellValue(p.getName());
-                row.createCell(1).setCellValue(p.getDescription());
-                row.createCell(2).setCellValue(p.getPrice());
-                row.createCell(3).setCellValue(p.getStock());
-                row.createCell(4).setCellValue(p.getExpiryDate());
-                row.createCell(5).setCellValue(p.getManufacturer());
-                row.createCell(6).setCellValue(p.getImageUri());
-                row.createCell(7).setCellValue(p.getBarcode());
-                row.createCell(8).setCellValue(p.getCategory());
+            
+            // Create images directory in app's internal storage if it doesn't exist
+            File imagesDir = new File(getFilesDir(), IMAGES_DIR);
+            if (!imagesDir.exists()) {
+                imagesDir.mkdirs();
             }
-            java.io.File file = new java.io.File(getExternalFilesDir(null), "products_export.xlsx");
-            java.io.FileOutputStream fos = new java.io.FileOutputStream(file);
-            workbook.write(fos);
-            fos.close();
-            workbook.close();
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.setType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            shareIntent.putExtra(Intent.EXTRA_STREAM, androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".provider", file));
-            shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(Intent.createChooser(shareIntent, "Share Excel File"));
+            
+            // First, read the CSV to get all image filenames we need to copy
+            java.util.Set<String> imageFilenames = new java.util.HashSet<>();
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(csvFile))) {
+                String line;
+                boolean isHeader = true;
+                while ((line = reader.readLine()) != null) {
+                    if (isHeader) { 
+                        isHeader = false; 
+                        continue; 
+                    }
+                    String[] fields = parseCsvLine(line);
+                    if (fields.length > 6 && !fields[6].isEmpty()) {
+                        // Extract just the filename from the image path
+                        String imagePath = fields[6];
+                        String filename = new File(imagePath).getName();
+                        if (!filename.isEmpty()) {
+                            imageFilenames.add(filename);
+                        }
+                    }
+                }
+            }
+            
+            // Copy only the image files that are referenced in the CSV
+            File tempImagesDir = new File(tempDir, ExportImportUtils.IMAGES_DIR);
+            Log.d(TAG, "Looking for images in: " + tempImagesDir.getAbsolutePath());
+            
+            if (tempImagesDir.exists() && tempImagesDir.isDirectory()) {
+                File[] imageFiles = tempImagesDir.listFiles();
+                Log.d(TAG, "Found " + (imageFiles != null ? imageFiles.length : 0) + " files in temp images directory");
+                Log.d(TAG, "Looking for these images: " + imageFilenames);
+                
+                if (imageFiles != null) {
+                    for (File imageFile : imageFiles) {
+                        String filename = imageFile.getName();
+                        Log.d(TAG, "Checking file: " + filename);
+                        
+                        if (imageFile.isFile() && imageFilenames.contains(filename)) {
+                            File destFile = new File(imagesDir, filename);
+                            Log.d(TAG, "Copying image from " + imageFile.getAbsolutePath() + " to " + destFile.getAbsolutePath());
+                            
+                            try (InputStream in = new java.io.FileInputStream(imageFile);
+                                 OutputStream out = new FileOutputStream(destFile)) {
+                                byte[] buffer = new byte[8192];
+                                int length;
+                                long totalBytes = 0;
+                                while ((length = in.read(buffer)) > 0) {
+                                    out.write(buffer, 0, length);
+                                    totalBytes += length;
+                                }
+                                Log.d(TAG, "Successfully copied " + totalBytes + " bytes for " + filename);
+                                
+                                // Verify the file was copied correctly
+                                if (destFile.exists()) {
+                                    Log.d(TAG, "Destination file exists, size: " + destFile.length() + " bytes");
+                                } else {
+                                    Log.e(TAG, "Failed to verify destination file: " + destFile.getAbsolutePath());
+                                }
+                            } catch (IOException e) {
+                                Log.e(TAG, "Error copying image: " + imageFile.getName(), e);
+                            }
+                        } else if (!imageFilenames.contains(filename)) {
+                            Log.d(TAG, "Skipping file not in CSV: " + filename);
+                        }
+                    }
+                }
+                
+                // List all files in the destination directory for verification
+                File[] destFiles = imagesDir.listFiles();
+                if (destFiles != null && destFiles.length > 0) {
+                    Log.d(TAG, "Files in destination directory after copy:");
+                    for (File f : destFiles) {
+                        Log.d(TAG, "- " + f.getName() + " (size: " + f.length() + " bytes)");
+                    }
+                } else {
+                    Log.e(TAG, "No files found in destination directory after copy");
+                }
+            }
+            
+            // Now import the products
+            importProductsFromCsv(Uri.fromFile(csvFile));
+            
         } catch (Exception e) {
-            Snackbar.make(findViewById(android.R.id.content), "Export failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            showSnackbar("Failed to import from ZIP: " + e.getMessage());
+            Log.e(TAG, "Import from ZIP failed", e);
+        } finally {
+            // Clean up temp files
+            if (tempDir != null) {
+                ExportImportUtils.cleanupTempFiles(tempDir);
+            }
         }
-    }
-
-    private String escapeCsv(String value) {
-        if (value == null) return "";
-        String v = value.replace("\"", "\"\"");
-        if (v.contains(",") || v.contains("\n") || v.contains("\"")) {
-            v = '"' + v + '"';
-        }
-        return v;
     }
 
     private void importProductsFromCsv(Uri uri) {
+        java.io.InputStream is = null;
+        java.io.BufferedReader reader = null;
+        int imported = 0, failed = 0;
+        
         try {
-            java.io.InputStream is = getContentResolver().openInputStream(uri);
-            java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
+            is = getContentResolver().openInputStream(uri);
+            if (is == null) {
+                showSnackbar("Cannot open file. File might be corrupted or inaccessible.");
+                return;
+            }
+            
+            // Get the images directory path
+            File imagesDir = new File(getFilesDir(), IMAGES_DIR);
+            String imagesDirPath = imagesDir.getAbsolutePath() + File.separator;
+            
+            reader = new java.io.BufferedReader(new java.io.InputStreamReader(is));
             String line;
             boolean isHeader = true;
-            int imported = 0, failed = 0;
             while ((line = reader.readLine()) != null) {
                 if (isHeader) { isHeader = false; continue; }
                 String[] fields = parseCsvLine(line);
@@ -758,44 +883,127 @@ public class AdminActivity extends AppCompatActivity {
                 } catch (Exception e) { failed++; continue; }
                 String expiryDate = fields[4];
                 String manufacturer = fields[5];
-                String imageUri = fields[6];
+                
+                // Handle image path - if it's a full path, extract just the filename
+                String imageUri = "";
+                if (fields.length > 6 && !fields[6].isEmpty()) {
+                    try {
+                        String imagePath = fields[6];
+                        Log.d(TAG, "Original image path from CSV: " + imagePath);
+                        
+                        String filename = new File(imagePath).getName();
+                        Log.d(TAG, "Extracted filename: " + filename);
+                        
+                        if (!filename.isEmpty()) {
+                            // Check if the image exists in our internal storage
+                            File imageFile = new File(imagesDir, filename);
+                            Log.d(TAG, "Looking for image at: " + imageFile.getAbsolutePath());
+                            
+                            if (imageFile.exists()) {
+                                Log.d(TAG, "Image found, creating URI");
+                                try {
+                                    // Create a content URI using the images directory path
+                                    Uri contentUri = Uri.parse("content://" + getApplicationContext().getPackageName() + ".provider/images/" + filename);
+                                    Log.d(TAG, "Created content URI: " + contentUri);
+                                    imageUri = contentUri.toString();
+                                    Log.d(TAG, "Final image URI: " + imageUri);
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Error creating content URI: " + e.getMessage(), e);
+                                    // Fallback to file URI if FileProvider fails
+                                    imageUri = Uri.fromFile(imageFile).toString();
+                                    Log.d(TAG, "Using file URI as fallback: " + imageUri);
+                                }
+                            } else {
+                                Log.e(TAG, "Image file does not exist: " + imageFile.getAbsolutePath());
+                                // List all files in the images directory for debugging
+                                File[] files = imagesDir.listFiles();
+                                if (files != null) {
+                                    Log.d(TAG, "Files in images directory:");
+                                    for (File f : files) {
+                                        Log.d(TAG, "- " + f.getName() + " (exists: " + f.exists() + ")");
+                                    }
+                                } else {
+                                    Log.e(TAG, "No files found in images directory");
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error processing image path: " + e.getMessage(), e);
+                    }
+                }
+                
                 String barcode = fields[7];
                 String category = fields[8];
-                // Insert or update product by barcode
-                Product existing = dbHelper.getProductByBarcode(barcode);
+                
+                Product existing = null;
+                
+                // Check for existing product by barcode if barcode is provided
+                if (barcode != null && !barcode.trim().isEmpty()) {
+                    existing = dbHelper.getProductByBarcode(barcode);
+                } 
+                // If no barcode or no product found by barcode, check by name (for products without barcode)
+                if (existing == null && (barcode == null || barcode.trim().isEmpty())) {
+                    existing = dbHelper.getProductByName(name);
+                }
+                
                 if (existing != null) {
+                    // Update existing product
                     existing.setName(name);
                     existing.setDescription(description);
                     existing.setPrice(price);
-                    existing.setStock(stock);
+                    // Add to existing stock instead of replacing it
+                    existing.setStock(existing.getStock() + stock);
                     existing.setExpiryDate(expiryDate);
                     existing.setManufacturer(manufacturer);
-                    existing.setImageUri(imageUri);
+                    // Only update image if the imported one is not empty
+                    if (imageUri != null && !imageUri.trim().isEmpty()) {
+                        existing.setImageUri(imageUri);
+                    }
                     existing.setCategory(category);
                     dbHelper.updateProduct(existing);
                 } else {
-                    Product p = new Product(name, description, price, stock, expiryDate, manufacturer, imageUri, barcode, category);
+                    // Insert new product
+                    Product p = new Product(name, description, price, stock, expiryDate, 
+                                         manufacturer, imageUri, barcode, category);
                     dbHelper.insertProduct(p);
                 }
                 imported++;
             }
-            reader.close();
-            Snackbar.make(findViewById(android.R.id.content), "Import complete: " + imported + " added/updated, " + failed + " failed.", Snackbar.LENGTH_LONG).show();
+            Snackbar.make(findViewById(android.R.id.content), 
+                "Import complete: " + imported + " added/updated, " + failed + " failed.", 
+                Snackbar.LENGTH_LONG).show();
             refreshData();
         } catch (Exception e) {
-            Snackbar.make(findViewById(android.R.id.content), "Import failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            showSnackbar("Import failed: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (reader != null) reader.close();
+                if (is != null) is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
     private void importProductsFromExcel(Uri uri) {
+        java.io.InputStream is = null;
+        Workbook workbook = null;
+        int imported = 0, failed = 0;
+        
         try {
-            java.io.InputStream is = getContentResolver().openInputStream(uri);
-            Workbook workbook = new XSSFWorkbook(is);
+            is = getContentResolver().openInputStream(uri);
+            if (is == null) {
+                showSnackbar("Cannot open file. File might be corrupted or inaccessible.");
+                return;
+            }
+            
+            workbook = new XSSFWorkbook(is);
             Sheet sheet = workbook.getSheetAt(0);
-            int imported = 0, failed = 0;
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
+                
                 String name = getCellString(row, 0);
                 String description = getCellString(row, 1);
                 double price;
@@ -803,34 +1011,66 @@ public class AdminActivity extends AppCompatActivity {
                 try {
                     price = Double.parseDouble(getCellString(row, 2));
                     stock = Integer.parseInt(getCellString(row, 3));
-                } catch (Exception e) { failed++; continue; }
+                } catch (Exception e) { 
+                    failed++; 
+                    continue; 
+                }
+                
                 String expiryDate = getCellString(row, 4);
                 String manufacturer = getCellString(row, 5);
                 String imageUri = getCellString(row, 6);
                 String barcode = getCellString(row, 7);
                 String category = getCellString(row, 8);
-                Product existing = dbHelper.getProductByBarcode(barcode);
+                
+                Product existing = null;
+                
+                // Check for existing product by barcode if barcode is provided
+                if (barcode != null && !barcode.trim().isEmpty()) {
+                    existing = dbHelper.getProductByBarcode(barcode);
+                } 
+                // If no barcode or no product found by barcode, check by name (for products without barcode)
+                if (existing == null && (barcode == null || barcode.trim().isEmpty())) {
+                    existing = dbHelper.getProductByName(name);
+                }
+                
                 if (existing != null) {
+                    // Update existing product
                     existing.setName(name);
                     existing.setDescription(description);
                     existing.setPrice(price);
-                    existing.setStock(stock);
+                    // Add to existing stock instead of replacing it
+                    existing.setStock(existing.getStock() + stock);
                     existing.setExpiryDate(expiryDate);
                     existing.setManufacturer(manufacturer);
-                    existing.setImageUri(imageUri);
+                    // Only update image if the imported one is not empty
+                    if (imageUri != null && !imageUri.trim().isEmpty()) {
+                        existing.setImageUri(imageUri);
+                    }
                     existing.setCategory(category);
                     dbHelper.updateProduct(existing);
                 } else {
-                    Product p = new Product(name, description, price, stock, expiryDate, manufacturer, imageUri, barcode, category);
+                    // Insert new product
+                    Product p = new Product(name, description, price, stock, expiryDate, 
+                                         manufacturer, imageUri, barcode, category);
                     dbHelper.insertProduct(p);
                 }
                 imported++;
             }
-            workbook.close();
-            Snackbar.make(findViewById(android.R.id.content), "Import complete: " + imported + " added/updated, " + failed + " failed.", Snackbar.LENGTH_LONG).show();
+            
+            Snackbar.make(findViewById(android.R.id.content), 
+                "Import complete: " + imported + " added/updated, " + failed + " failed.", 
+                Snackbar.LENGTH_LONG).show();
             refreshData();
         } catch (Exception e) {
-            Snackbar.make(findViewById(android.R.id.content), "Import failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show();
+            showSnackbar("Import failed: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (workbook != null) workbook.close();
+                if (is != null) is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -850,21 +1090,276 @@ public class AdminActivity extends AppCompatActivity {
         java.util.List<String> tokens = new java.util.ArrayList<>();
         StringBuilder sb = new StringBuilder();
         boolean inQuotes = false;
+        
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
             if (c == '"') {
                 inQuotes = !inQuotes;
             } else if (c == ',' && !inQuotes) {
-                tokens.add(sb.toString());
+                tokens.add(sb.toString().trim());
                 sb.setLength(0);
             } else {
                 sb.append(c);
             }
         }
-        tokens.add(sb.toString());
+        tokens.add(sb.toString().trim());
         return tokens.toArray(new String[0]);
     }
+    
+    private void startImportProductsFlow() {
+        if (checkStoragePermission()) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("application/zip");
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | 
+                              Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                              Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                startActivityForResult(Intent.createChooser(intent, "Select Export File"), REQUEST_IMPORT_ZIP);
+            } catch (Exception e) {
+                showSnackbar("Error opening file picker: " + e.getMessage());
+            }
+        }
+    }
+    
+    private void startImportProductsExcelFlow() {
+        if (checkStoragePermission()) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+                String[] mimeTypes = {
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "application/vnd.ms-excel.sheet.macroEnabled.12",
+                    "application/octet-stream"
+                };
+                intent.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | 
+                              Intent.FLAG_GRANT_WRITE_URI_PERMISSION |
+                              Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                startActivityForResult(Intent.createChooser(intent, "Select Excel File"), REQUEST_IMPORT_EXCEL);
+            } catch (Exception e) {
+                showSnackbar("Error opening file picker: " + e.getMessage());
+            }
+        }
+    }
+    
+    private void startExportProductsZipFlow() {
+        try {
+            ArrayList<Product> products = dbHelper.getAllProducts();
+            if (products == null || products.isEmpty()) {
+                showSnackbar("No products to export");
+                return;
+            }
 
+            // Create temporary export directory
+            File exportDir = ExportImportUtils.createTempExportDir(this);
+            File imagesDir = ExportImportUtils.createImagesDir(exportDir);
+            
+            try {
+                // Create CSV file
+                File csvFile = new File(exportDir, "products.csv");
+                StringBuilder csvBuilder = new StringBuilder();
+                
+                // Header
+                csvBuilder.append("name,description,price,stock,expiryDate,manufacturer,imagePath,barcode,category\n");
+                
+                // Data rows
+                for (Product p : products) {
+                    String imagePath = "";
+                    if (p.getImageUri() != null && !p.getImageUri().isEmpty()) {
+                        try {
+                            String uriString = p.getImageUri();
+                            String imageName = "img_" + System.currentTimeMillis() + ".jpg";
+                            
+                            // Handle content URIs
+                            if (uriString.startsWith("content://")) {
+                                try (InputStream in = getContentResolver().openInputStream(Uri.parse(uriString))) {
+                                    if (in != null) {
+                                        File destFile = new File(imagesDir, imageName);
+                                        try (FileOutputStream out = new FileOutputStream(destFile)) {
+                                            byte[] buffer = new byte[8192];
+                                            int read;
+                                            while ((read = in.read(buffer)) != -1) {
+                                                out.write(buffer, 0, read);
+                                            }
+                                            imagePath = IMAGES_DIR + "/" + imageName;
+                                            Log.d(TAG, "Exported image to: " + destFile.getAbsolutePath());
+                                        }
+                                    }
+                                }
+                            } 
+                            // Handle file URIs
+                            else if (uriString.startsWith("file://")) {
+                                File srcFile = new File(Uri.parse(uriString).getPath());
+                                if (srcFile.exists()) {
+                                    String ext = uriString.substring(uriString.lastIndexOf('.'));
+                                    String newImageName = "img_" + System.currentTimeMillis() + ext;
+                                    File destFile = new File(imagesDir, newImageName);
+                                    
+                                    try (FileInputStream in = new FileInputStream(srcFile);
+                                         FileOutputStream out = new FileOutputStream(destFile)) {
+                                        byte[] buffer = new byte[8192];
+                                        int read;
+                                        while ((read = in.read(buffer)) != -1) {
+                                            out.write(buffer, 0, read);
+                                        }
+                                        imagePath = IMAGES_DIR + "/" + newImageName;
+                                        Log.d(TAG, "Copied file to: " + destFile.getAbsolutePath());
+                                    }
+                                }
+                            }
+                            // Handle direct file paths
+                            else if (new File(uriString).exists()) {
+                                File srcFile = new File(uriString);
+                                String ext = uriString.substring(uriString.lastIndexOf('.'));
+                                String newImageName = "img_" + System.currentTimeMillis() + ext;
+                                File destFile = new File(imagesDir, newImageName);
+                                
+                                try (FileInputStream in = new FileInputStream(srcFile);
+                                     FileOutputStream out = new FileOutputStream(destFile)) {
+                                    byte[] buffer = new byte[8192];
+                                    int read;
+                                    while ((read = in.read(buffer)) != -1) {
+                                        out.write(buffer, 0, read);
+                                    }
+                                    imagePath = IMAGES_DIR + "/" + newImageName;
+                                    Log.d(TAG, "Copied direct file to: " + destFile.getAbsolutePath());
+                                }
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error exporting image: " + e.getMessage(), e);
+                        }
+                    }
+                    
+                    // Add product to CSV
+                    csvBuilder.append(escapeCsv(p.getName())).append(",")
+                            .append(escapeCsv(p.getDescription())).append(",")
+                            .append(p.getPrice()).append(",")
+                            .append(p.getStock()).append(",")
+                            .append(escapeCsv(p.getExpiryDate())).append(",")
+                            .append(escapeCsv(p.getManufacturer())).append(",")
+                            .append(escapeCsv(imagePath)).append(",")
+                            .append(escapeCsv(p.getBarcode())).append(",")
+                            .append(escapeCsv(p.getCategory())).append("\n");
+                }
+                
+                // Write CSV to file
+                try (FileOutputStream fos = new FileOutputStream(csvFile)) {
+                    fos.write(csvBuilder.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                }
+                
+                // Create ZIP file
+                String exportName = ExportImportUtils.getExportFileName();
+                File zipFile = ExportImportUtils.createZipFromDirectory(exportDir, exportName);
+                
+                // Share the ZIP file
+                Uri contentUri = FileProvider.getUriForFile(this, 
+                    getPackageName() + ".provider", 
+                    zipFile);
+                    
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("application/zip");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                
+                startActivity(Intent.createChooser(shareIntent, "Export products"));
+                showSnackbar("Exported to " + zipFile.getName());
+                
+            } finally {
+                // Clean up temporary files
+                ExportImportUtils.cleanupTempFiles(exportDir);
+            }
+            
+        } catch (Exception e) {
+            showSnackbar("Export failed: " + e.getMessage());
+            Log.e(TAG, "Export failed", e);
+        }
+    }
+
+    private void startExportProductsCsvFlow() {
+        try {
+            ArrayList<Product> products = dbHelper.getAllProducts();
+            if (products == null || products.isEmpty()) {
+                showSnackbar("No products to export");
+                return;
+            }
+            
+            StringBuilder csvBuilder = new StringBuilder();
+            // Header
+            csvBuilder.append("name,description,price,stock,expiryDate,manufacturer,imageUri,barcode,category\n");
+            
+            // Data rows
+            for (Product p : products) {
+                csvBuilder.append(escapeCsv(p.getName())).append(",")
+                        .append(escapeCsv(p.getDescription())).append(",")
+                        .append(p.getPrice()).append(",")
+                        .append(p.getStock()).append(",")
+                        .append(escapeCsv(p.getExpiryDate())).append(",")
+                        .append(escapeCsv(p.getManufacturer())).append(",")
+                        .append(escapeCsv(p.getImageUri())).append(",")
+                        .append(escapeCsv(p.getBarcode())).append(",")
+                        .append(escapeCsv(p.getCategory())).append("\n");
+            }
+            
+            // Create file in app's external files directory
+            File exportDir = new File(getExternalFilesDir(null), "exports");
+            if (!exportDir.exists()) {
+                exportDir.mkdirs();
+            }
+            
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+            File file = new File(exportDir, "products_" + timeStamp + ".csv");
+            
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                fos.write(csvBuilder.toString().getBytes(StandardCharsets.UTF_8));
+                
+                // Share the file
+                Uri contentUri = FileProvider.getUriForFile(this, 
+                    getPackageName() + ".provider", 
+                    file);
+                    
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.setType("text/csv");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+                shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                
+                startActivity(Intent.createChooser(shareIntent, "Export products as CSV"));
+                showSnackbar("Exported to " + file.getName());
+                
+            } catch (IOException e) {
+                showSnackbar("Export failed: " + e.getMessage());
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            showSnackbar("Export failed: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void startExportProductsExcelFlow() {
+        // This method is kept for backward compatibility
+        showSnackbar("Please use the ZIP export/import for better reliability with images");
+    }
+    
+    private void exportProductsToExcel() {
+        // This method is kept for backward compatibility
+        showSnackbar("Please use the ZIP export/import for better reliability with images");
+    }
+    
+    private String escapeCsv(String value) {
+        if (value == null) {
+            return "";
+        }
+        String escaped = value.replace("\"", "\"\"");
+        if (escaped.contains(",") || escaped.contains("\n") || escaped.contains("\"")) {
+            escaped = "\"" + escaped + "\"";
+        }
+        return escaped;
+    }
+    
     private void showImportFormatDialog() {
         new android.app.AlertDialog.Builder(this)
             .setTitle("Import Format")
@@ -882,11 +1377,13 @@ public class AdminActivity extends AppCompatActivity {
     private void showExportFormatDialog() {
         new android.app.AlertDialog.Builder(this)
             .setTitle("Export Format")
-            .setItems(new String[]{"CSV", "Excel (.xlsx)"}, (dialog, which) -> {
+            .setItems(new String[]{"ZIP (Recommended)", "CSV", "Excel"}, (dialog, which) -> {
                 if (which == 0) {
-                    startExportProductsFlow();
+                    startExportProductsZipFlow();
+                } else if (which == 1) {
+                    startExportProductsCsvFlow();
                 } else {
-                    startExportProductsExcelFlow();
+                    exportProductsToExcel();
                 }
             })
             .setNegativeButton("Cancel", null)
@@ -928,3 +1425,5 @@ public class AdminActivity extends AppCompatActivity {
         // Deprecated: use applyCombinedFilters instead
     }
 }
+
+

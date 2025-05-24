@@ -1,5 +1,8 @@
 package com.example.pharmacyl3;
 
+import com.example.pharmacyl3.Product;
+import com.example.pharmacyl3.DBHelper;
+import com.example.pharmacyl3.utils.CurrencyUtils;
 import android.os.Bundle;
 import android.widget.TextView;
 import androidx.annotation.Nullable;
@@ -48,7 +51,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         for (Product p : productsList) {
             totalMoney += p.getPrice() * p.getStock();
         }
-        tvTotalMoney.setText(String.format(Locale.getDefault(), "Total Money: $%.2f", totalMoney));
+        tvTotalMoney.setText("Total Money: " + CurrencyUtils.formatPrice(totalMoney));
 
         ArrayList<String> lowStockNames = new ArrayList<>();
         for (Product p : productsList) {

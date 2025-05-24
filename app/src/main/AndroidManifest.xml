@@ -4,7 +4,23 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+        android:enabled="true"
+        android:exported="true" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
+        android:enabled="true"
+        android:exported="true" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"
+        android:enabled="true"
+        android:exported="true" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -30,10 +46,16 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".utils.NotificationHelper$NotificationService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+            android:stopWithTask="true" />
         <activity
             android:name=".CartActivity"
             android:exported="false"/>
@@ -63,7 +85,7 @@
             android:exported="false" />
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.example.pharmacyl3.provider"
+            android:authorities="${applicationId}.provider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

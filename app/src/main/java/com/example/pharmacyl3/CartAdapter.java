@@ -1,5 +1,8 @@
 package com.example.pharmacyl3;
 
+import com.example.pharmacyl3.R;
+import com.example.pharmacyl3.Product;
+import com.example.pharmacyl3.utils.CurrencyUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,7 +39,7 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.ViewHolder> {
         Product product = cartItems.get(position);
         holder.tvProductName.setText(product.getName());
         // Show price x quantity
-        holder.tvProductPrice.setText(String.format("$%.2f x %d = $%.2f", product.getPrice(), product.getQuantity(), product.getPrice() * product.getQuantity()));
+        holder.tvProductPrice.setText(CurrencyUtils.formatPriceWithQuantity(product.getPrice(), product.getQuantity()));
         holder.btnRemove.setOnClickListener(v -> {
             listener.onRemoveItem(holder.getAdapterPosition());
         });
