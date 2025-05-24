@@ -112,6 +112,19 @@ pharmacy-beta-
 
 ## Recent Changes
 
+### Code Cleanup & Performance (May 2025)
+- **Removed Unused Code**:
+  - Deleted deprecated `filterProducts` method from `AdminActivity`
+  - Removed unused `product_item.xml` layout file
+  - Cleaned up duplicate method definitions
+- **Notification System**:
+  - Simplified notification implementation
+  - Removed unnecessary foreground service requirements
+  - Improved notification reliability
+- **Build Improvements**:
+  - Fixed build errors related to duplicate methods
+  - Improved code organization and maintainability
+
 ### UI Improvements
 - Updated admin notification screen with Floating Action Buttons (FABs)
 - Changed customer product availability indicator to purple Material Chip

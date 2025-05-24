@@ -1419,12 +1419,4 @@ public class AdminActivity extends AppCompatActivity {
     private void filterProductsByCategory() {
         applyCombinedFilters();
     }
-
-    private void showSnackbar(String message) {
-        // ...
-    }
-
-    private void applyCombinedFilters() {
-        // ...
-    }
 }
