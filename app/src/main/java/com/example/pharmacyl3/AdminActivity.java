@@ -1420,10 +1420,11 @@ public class AdminActivity extends AppCompatActivity {
         applyCombinedFilters();
     }
 
-    @Deprecated
-    private void filterProducts(String query) {
-        // Deprecated: use applyCombinedFilters instead
+    private void showSnackbar(String message) {
+        // ...
+    }
+
+    private void applyCombinedFilters() {
+        // ...
     }
 }
-
-
