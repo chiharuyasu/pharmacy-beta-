@@ -1,7 +1,7 @@
 package com.example.pharmacyl3;
 
 import com.example.pharmacyl3.Product;
-import com.example.pharmacyl3.utils.CurrencyUtils;
+
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
@@ -142,7 +142,7 @@ public class CartActivity extends AppCompatActivity {
         for (Product product : cartItems) {
             total += product.getPrice() * product.getQuantity();
         }
-        tvTotalAmount.setText(CurrencyUtils.formatPrice(total));
+        tvTotalAmount.setText(String.format("DZD %.2f", total));
     }
 
     // --- Restore product stock when removed from cart ---

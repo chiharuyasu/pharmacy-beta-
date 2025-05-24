@@ -2,7 +2,6 @@ package com.example.pharmacyl3;
 
 import com.example.pharmacyl3.R;
 import com.example.pharmacyl3.Product;
-import com.example.pharmacyl3.utils.CurrencyUtils;
 import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,7 +45,7 @@ public class AdminProductAdapter extends RecyclerView.Adapter<AdminProductAdapte
         Product product = products.get(position);
         
         holder.tvProductName.setText(product.getName());
-        holder.tvProductPrice.setText(CurrencyUtils.formatPrice(product.getPrice()));
+        holder.tvProductPrice.setText(String.format("DZD %.2f", product.getPrice()));
         holder.tvProductDescription.setText(product.getDescription());
         holder.tvProductExpiryDate.setText("Expiry Date: " + product.getExpiryDate());
         holder.tvProductManufacturer.setText("Manufacturer: " + product.getManufacturer());
